@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Playfair+Display:ital,wght@1,900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Outfit", sans-serif;
+  --color-primary: var(--primary-color, #ff4e00);
+  --color-secondary: var(--secondary-color, #ffffff);
+  --color-accent: var(--accent-color, #ff4e00);
+  --color-card: var(--card-color, rgba(255, 255, 255, 0.03));
+}
+
+.font-app-sans { font-family: var(--font-sans); }
+.font-app-serif { font-family: var(--font-serif); }
+.font-app-mono { font-family: var(--font-mono); }
+.font-app-display { font-family: var(--font-display); }
+
+@layer base {
+  body {
+    @apply bg-[#0a0a0a] text-white selection:bg-primary selection:text-white;
+    margin: 0;
+  }
+}
+
+.glass-panel {
+  @apply backdrop-blur-[12px] border border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+  background-color: var(--color-card);
+}
+
+.fire-glow {
+  @apply border border-primary/50;
+  box-shadow: 0 0 20px color-mix(in srgb, var(--primary-color, #ff4e00), transparent 70%);
+}
+
+.accent-text {
+  @apply text-primary;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--primary-color, #ff4e00), transparent 50%));
+}
+
+.bg-gradient-fire {
+  @apply bg-[radial-gradient(circle_at_50%_50%,#2e2e2e_0%,#0a0a0a_100%)];
+}
+
+.fire-orb {
+  @apply absolute w-[400px] h-[400px] blur-[40px] z-0 pointer-events-none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--primary-color, #ff4e00), transparent 85%) 0%, transparent 70%);
+}
+
+.glass {
+  @apply bg-white/[0.03] backdrop-blur-[12px] border border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+}
+
+.glass-dark {
+  @apply bg-black/40 backdrop-blur-xl border border-white/5;
+}
+
+.text-orange-glow {
+  @apply text-primary;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--primary-color, #ff4e00), transparent 50%));
+}
+
+.bg-orange-fire {
+  @apply bg-primary;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    .print-only {
+        display: block !important;
+    }
+}
+
+.print-only {
+    display: none;
+}
+
