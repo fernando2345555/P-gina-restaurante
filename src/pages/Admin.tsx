@@ -223,9 +223,14 @@ export const Admin: React.FC = () => {
                   <motion.span 
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-white text-black text-[8px] flex items-center justify-center rounded-full border border-[#ff4e00] font-black"
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 text-white text-[8px] flex items-center justify-center rounded-full border border-black font-black"
                   >
-                    {newOrdersCount}
+                    <motion.span
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                    >
+                      {newOrdersCount}
+                    </motion.span>
                   </motion.span>
                 )}
                 {tab.id === 'reviews' && pendingReviewsCount > 0 && (
