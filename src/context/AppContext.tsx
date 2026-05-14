@@ -16,6 +16,8 @@ interface AppContextType {
   setReviews: (reviews: Review[]) => void;
   orders: Order[];
   setOrders: (orders: Order[]) => void;
+  newOrdersCount: number;
+  resetNewOrdersCount: () => void;
   isAdmin: boolean;
   login: (user: string, pass: string) => boolean;
   logout: () => void;
@@ -52,6 +54,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [newOrdersCount, setNewOrdersCount] = useState(0);
+
+  const resetNewOrdersCount = () => setNewOrdersCount(0);
+
   const [isAdmin, setIsAdmin] = useState(() => {
     return localStorage.getItem('zenith_auth_token') === 'true';
   });
@@ -81,6 +87,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [reviews]);
 
   useEffect(() => {
+    // When orders change, check if it was an addition
+    const savedOrdersStr = localStorage.getItem('restaurant_orders');
+    const savedOrders: Order[] = savedOrdersStr ? JSON.parse(savedOrdersStr) : [];
+    
+    // If the new orders array is longer, we assume new orders came in (not just updates)
+    if (orders.length > savedOrders.length) {
+      setNewOrdersCount(prev => prev + (orders.length - savedOrders.length));
+    }
+
     localStorage.setItem('restaurant_orders', JSON.stringify(orders));
   }, [orders]);
 
@@ -122,6 +137,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       menu, setMenu,
       reviews, setReviews,
       orders, setOrders,
+      newOrdersCount, resetNewOrdersCount,
       isAdmin, login, logout,
       updatePassword
     }}>

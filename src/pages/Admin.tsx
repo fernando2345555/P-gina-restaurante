@@ -6,11 +6,28 @@ import { Category, MenuItem } from '../types';
 import { CATEGORIES } from '../constants';
 
 export const Admin: React.FC = () => {
-  const { config, setConfig, menu, setMenu, orders, setOrders, reviews, setReviews, updatePassword } = useApp();
+  const { config, setConfig, menu, setMenu, orders, setOrders, reviews, setReviews, updatePassword, newOrdersCount, resetNewOrdersCount } = useApp();
   const [activeTab, setActiveTab] = useState<'orders' | 'menu' | 'config' | 'reviews'>('orders');
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [newPass, setNewPass] = useState('');
+  const [showNotification, setShowNotification] = useState(false);
+
+  // Trigger notification when new orders arrive
+  React.useEffect(() => {
+    if (newOrdersCount > 0 && activeTab !== 'orders') {
+      setShowNotification(true);
+      const timer = setTimeout(() => setShowNotification(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [newOrdersCount, activeTab]);
+
+  // Reset count when viewing orders
+  React.useEffect(() => {
+    if (activeTab === 'orders' && newOrdersCount > 0) {
+      resetNewOrdersCount();
+    }
+  }, [activeTab, newOrdersCount, resetNewOrdersCount]);
 
   // CMS/Config handlers
   const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -20,7 +37,7 @@ export const Admin: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingHero, setIsDraggingHero] = useState(false);
 
-  const handleFileUpload = (file: File, target: 'gallery' | 'hero' | 'logo' | 'location' = 'gallery') => {
+  const handleFileUpload = (file: File, target: 'gallery' | 'hero' | 'logo' | 'location' | 'secondaryLocation' = 'gallery') => {
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -40,15 +57,15 @@ export const Admin: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const onDrop = (e: React.DragEvent, target: 'gallery' | 'hero' | 'logo' | 'location' = 'gallery') => {
+  const onDrop = (e: React.DragEvent, target: 'gallery' | 'hero' | 'logo' | 'location' | 'secondaryLocation' = 'gallery') => {
     e.preventDefault();
     setIsDragging(false);
     setIsDraggingHero(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      if (target === 'hero' || target === 'logo' || target === 'location') {
-        handleFileUpload(e.dataTransfer.files[0], target as any);
+      if (target === 'hero' || target === 'logo' || target === 'location' || target === 'secondaryLocation') {
+        handleFileUpload(e.dataTransfer.files[0], target);
       } else {
-        Array.from(e.dataTransfer.files).forEach(f => handleFileUpload(f, 'gallery'));
+        Array.from(e.dataTransfer.files).forEach((f: File) => handleFileUpload(f, 'gallery'));
       }
     }
   };
@@ -178,11 +195,20 @@ export const Admin: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all ${
+                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all relative ${
                   activeTab === tab.id ? 'bg-[#ff4e00] text-black shadow-[0_0_15px_rgba(255,78,0,0.3)]' : 'glass text-white/50 border-white/5'
                 }`}
               >
                 <tab.icon size={14} /> {tab.label}
+                {tab.id === 'orders' && newOrdersCount > 0 && (
+                  <motion.span 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-white text-black text-[8px] flex items-center justify-center rounded-full border border-[#ff4e00] font-black"
+                  >
+                    {newOrdersCount}
+                  </motion.span>
+                )}
               </button>
             ))}
           </div>
@@ -469,7 +495,16 @@ export const Admin: React.FC = () => {
                             <p className="text-[10px] uppercase font-black text-white/60 mb-0.5">Subir Logo Oficial</p>
                             <p className="text-[8px] uppercase text-white/20 font-bold tracking-widest">Aparecerá en el Menú y Cabecera</p>
                           </div>
-                          <input id="logo-upload-multimedia" type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo')} />
+                          <input 
+                            id="logo-upload-multimedia" 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleFileUpload(file, 'logo');
+                            }} 
+                          />
                         </div>
                       </div>
 
@@ -493,7 +528,10 @@ export const Admin: React.FC = () => {
                               type="file" 
                               accept="image/*" 
                               className="hidden"
-                              onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'hero')}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFileUpload(file, 'hero');
+                              }}
                             />
                           </div>
                         </div>
@@ -514,7 +552,7 @@ export const Admin: React.FC = () => {
                             multiple 
                             accept="image/*" 
                             className="hidden"
-                            onChange={(e) => e.target.files && Array.from(e.target.files).forEach(f => handleFileUpload(f, 'gallery'))}
+                            onChange={(e) => e.target.files && Array.from(e.target.files).forEach((f: File) => handleFileUpload(f, 'gallery'))}
                           />
                         </div>
 
@@ -596,7 +634,16 @@ export const Admin: React.FC = () => {
                             onClick={() => config.locationType === 'image' && document.getElementById('location-upload')?.click()}
                           >
                              {config.locationImage ? <img src={config.locationImage} className="h-full w-full object-cover" /> : <><Plus size={14} className="text-white/20" /><span className="text-[9px] font-black uppercase text-white/20">Subir Ubicación 1</span></>}
-                             <input id="location-upload" type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'location')} />
+                             <input 
+                               id="location-upload" 
+                               type="file" 
+                               accept="image/*" 
+                               className="hidden" 
+                               onChange={(e) => {
+                                 const file = e.target.files?.[0];
+                                 if (file) handleFileUpload(file, 'location');
+                               }} 
+                             />
                           </div>
                         </div>
                         <div className="space-y-1">
@@ -606,7 +653,16 @@ export const Admin: React.FC = () => {
                             onClick={() => document.getElementById('secondary-location-upload')?.click()}
                           >
                              {config.secondaryLocationImage ? <img src={config.secondaryLocationImage} className="h-full w-full object-cover" /> : <><Plus size={14} className="text-white/20" /><span className="text-[9px] font-black uppercase text-white/20">Subir Fachada</span></>}
-                             <input id="secondary-location-upload" type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'secondaryLocation')} />
+                             <input 
+                               id="secondary-location-upload" 
+                               type="file" 
+                               accept="image/*" 
+                               className="hidden" 
+                               onChange={(e) => {
+                                 const file = e.target.files?.[0];
+                                 if (file) handleFileUpload(file, 'secondaryLocation');
+                               }} 
+                             />
                           </div>
                         </div>
                       </div>
@@ -722,7 +778,33 @@ export const Admin: React.FC = () => {
       </div>
     </main>
 
-      {/* Menu Edit Modal */}
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {showNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 20, x: '-50%' }}
+            className="fixed bottom-10 left-1/2 z-[300] glass-panel px-6 py-4 rounded-2xl border-primary/40 flex items-center gap-4 cursor-pointer shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            onClick={() => {
+              setActiveTab('orders');
+              setShowNotification(false);
+            }}
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary animate-pulse">
+              <ShoppingBag size={20} />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-black tracking-widest text-primary">Nuevo Pedido Recibido</p>
+              <p className="text-xs text-white/60">Se han recibido {newOrdersCount} pedido{newOrdersCount > 1 ? 's' : ''} nuevo{newOrdersCount > 1 ? 's' : ''}.</p>
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); setShowNotification(false); }} className="ml-4 text-white/20 hover:text-white transition-colors">
+              <X size={16} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {(editingItem || isAddingItem) && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
