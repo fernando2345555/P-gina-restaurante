@@ -2,22 +2,21 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, ShoppingCart, Info, Flame, ChevronRight } from 'lucide-react';
-import { MenuItem, Category, CookingTerm, OrderItem } from '../types';
-import { COOKING_TERMS, CATEGORIES } from '../constants';
+import { MenuItem, Category, OrderItem } from '../types';
+import { CATEGORIES } from '../constants';
 
 export const Menu: React.FC = () => {
-  const { menu, setOrders, orders } = useApp();
+  const { menu, setOrders, orders, config } = useApp();
   const [activeCategory, setActiveCategory] = useState<Category>('Cortes');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
-  const [cookingTerm, setCookingTerm] = useState<CookingTerm>('Término Medio');
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [customerName, setCustomerName] = useState('');
 
   const filteredMenu = menu.filter((item) => item.category === activeCategory);
 
-  const addToCart = (item: MenuItem, term?: CookingTerm) => {
-    const orderItem: OrderItem = { ...item, quantity: 1, cookingTerm: term };
+  const addToCart = (item: MenuItem) => {
+    const orderItem: OrderItem = { ...item, quantity: 1 };
     setCart([...cart, orderItem]);
     setSelectedItem(null);
   };
@@ -28,13 +27,19 @@ export const Menu: React.FC = () => {
 
   const total = cart.reduce((sum, item) => sum + item.price, 0);
 
+  const handleWhatsAppInquiry = (item: MenuItem) => {
+    const message = `Hola! 👋 Me gustaría consultar sobre el plato: *${item.name}* que vi en su menú. \n💰 Precio: $${item.price.toFixed(2)} \n\n¿Cómo puedo realizar el pago?`;
+    window.open(`https://wa.me/${config.whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
   const placeOrder = () => {
     if (!customerName) {
       alert('Por favor ingrese su nombre para el pedido.');
       return;
     }
+    const orderId = Math.random().toString(36).substr(2, 9).toUpperCase();
     const newOrder = {
-      id: Math.random().toString(36).substr(2, 9).toUpperCase(),
+      id: orderId,
       customerName,
       items: cart,
       total,
@@ -42,10 +47,35 @@ export const Menu: React.FC = () => {
       date: new Date().toLocaleString(),
     };
     setOrders([...orders, newOrder]);
+    
+    // Generate WhatsApp Message
+    const orderItemsText = cart.map(item => 
+      `• ${item.name} - $${item.price}`
+    ).join('\n');
+
+    const whatsappMessage = 
+`🔥 *NUEVO PEDIDO - ${config.name}* 🔥
+---------------------------
+🆔 *ID:* ${orderId}
+👤 *Cliente:* ${customerName}
+📅 *Fecha:* ${newOrder.date}
+---------------------------
+🛒 *DETALLES:*
+${orderItemsText}
+---------------------------
+💰 *TOTAL:* $${total.toFixed(2)}
+---------------------------
+📍 _Por favor contactar para coordinar entrega/retiro._`;
+
+    const whatsappUrl = `https://wa.me/${config.whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+    
     setCart([]);
     setCustomerName('');
     setShowCart(false);
-    alert('Pedido realizado con éxito! Nuestro personal lo atenderá pronto.');
+    
+    // Alert and Redirect
+    alert('Pedido realizado con éxito! Te estamos redirigiendo a WhatsApp para finalizar tu pedido.');
+    window.open(whatsappUrl, '_blank');
   };
 
   return (
@@ -96,19 +126,28 @@ export const Menu: React.FC = () => {
               <div className="p-6 flex-1 flex flex-col">
                 <h3 className="text-xl font-black italic uppercase mb-2 group-hover:text-primary transition-colors">{item.name}</h3>
                 <p className="text-xs text-white/40 mb-6 flex-1 italic leading-relaxed">{item.description}</p>
-                <button
-                  onClick={() => item.needsCookingTerm ? setSelectedItem(item) : addToCart(item)}
-                  className="w-full py-4 glass border border-primary/20 hover:bg-primary hover:text-black rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                >
-                  <Plus size={16} /> {item.needsCookingTerm ? 'Seleccionar Término' : 'Agregar al Pedido'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedItem(item)}
+                    className="flex-1 py-4 glass border border-white/10 hover:border-primary/50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  >
+                    <Info size={14} /> Detalles
+                  </button>
+                  <button
+                    onClick={() => addToCart(item)}
+                    className="p-4 bg-primary text-black rounded-xl hover:shadow-[0_0_20px_rgba(255,78,0,0.4)] transition-all active:scale-90"
+                    title="Agregar rápido"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
-      {/* Cooking Term Modal */}
+      {/* Item Detail Modal */}
       <AnimatePresence>
         {selectedItem && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -117,40 +156,59 @@ export const Menu: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedItem(null)}
-              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+              className="absolute inset-0 bg-black/95 backdrop-blur-xl"
             />
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-sm glass-dark p-8 rounded-3xl border border-[#ff4d00]/30"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-lg glass-dark rounded-[40px] border border-white/10 overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.8)]"
             >
-              <h3 className="text-2xl font-bold mb-2 uppercase italic">Punto de Cocción</h3>
-              <p className="text-white/60 text-sm mb-6">Para el {selectedItem.name}</p>
-              
-              <div className="space-y-3 mb-8">
-                {COOKING_TERMS.map((term) => (
-                  <button
-                    key={term}
-                    onClick={() => setCookingTerm(term as CookingTerm)}
-                    className={`w-full p-4 rounded-2xl flex items-center justify-between border transition-all ${
-                      cookingTerm === term 
-                        ? 'bg-[#ff4d00]/20 border-[#ff4d00] text-white shadow-[0_0_15px_rgba(255,77,0,0.2)]'
-                        : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
-                    }`}
-                  >
-                    <span className="font-bold">{term}</span>
-                    {cookingTerm === term && <Flame size={18} className="text-[#ff4d00]" />}
-                  </button>
-                ))}
+              <button 
+                onClick={() => setSelectedItem(null)}
+                className="absolute top-6 right-6 z-10 w-10 h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors"
+              >
+                <Plus size={24} className="rotate-45" />
+              </button>
+
+              <div className="h-64 relative">
+                <img src={selectedItem.image} className="w-full h-full object-cover" alt={selectedItem.name} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-8">
+                  <span className="text-[10px] uppercase font-black tracking-[0.4em] text-primary mb-2 block">Selección Pro</span>
+                  <h3 className="text-4xl font-black italic uppercase leading-none">{selectedItem.name}</h3>
+                </div>
               </div>
 
-              <button
-                onClick={() => addToCart(selectedItem, cookingTerm)}
-                className="w-full py-4 bg-[#ff4d00] hover:bg-[#ff6a00] text-white font-bold rounded-2xl shadow-xl transition-all"
-              >
-                Confirmar y Agregar
-              </button>
+              <div className="p-10">
+                <div className="flex items-center justify-between mb-8 pb-8 border-b border-white/5">
+                  <div className="text-3xl font-black text-primary font-mono italic">
+                    ${selectedItem.price.toFixed(2)}
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-white/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Disponible
+                  </div>
+                </div>
+
+                <p className="text-white/50 mb-10 leading-relaxed italic border-l-2 border-primary/20 pl-6">
+                  {selectedItem.description}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <button
+                    onClick={() => addToCart(selectedItem)}
+                    className="py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:bg-primary transition-all duration-300 flex items-center justify-center gap-3 shadow-xl"
+                  >
+                    <ShoppingCart size={18} /> Agregar al Pedido
+                  </button>
+                  <button
+                    onClick={() => handleWhatsAppInquiry(selectedItem)}
+                    className="py-5 glass-panel border-primary/30 text-primary font-black uppercase tracking-widest rounded-2xl hover:bg-primary/10 transition-all duration-300 flex items-center justify-center gap-3"
+                  >
+                    <Flame size={18} /> Consultar o Pagar
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}
@@ -202,9 +260,6 @@ export const Menu: React.FC = () => {
                     <img src={item.image} className="w-16 h-16 rounded-xl object-cover" />
                     <div className="flex-1">
                       <h4 className="font-bold">{item.name}</h4>
-                      {item.cookingTerm && (
-                        <p className="text-xs text-[#ff4d00] font-mono uppercase tracking-tighter">{item.cookingTerm}</p>
-                      )}
                       <p className="text-sm text-white/50">${item.price.toFixed(2)}</p>
                     </div>
                     <button onClick={() => removeFromCart(i)} className="text-red-500/50 hover:text-red-500 p-2 transition-colors">

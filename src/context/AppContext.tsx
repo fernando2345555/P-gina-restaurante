@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { RestaurantConfig, MenuItem, Review, Order } from '../types';
+import { RestaurantConfig, MenuItem, Review, Order, Message } from '../types';
 import { INITIAL_CONFIG, INITIAL_MENU } from '../constants';
 
 interface AppContextType {
@@ -16,6 +16,8 @@ interface AppContextType {
   setReviews: (reviews: Review[]) => void;
   orders: Order[];
   setOrders: (orders: Order[]) => void;
+  messages: Message[];
+  setMessages: (messages: Message[]) => void;
   newOrdersCount: number;
   resetNewOrdersCount: () => void;
   isAdmin: boolean;
@@ -54,6 +56,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [messages, setMessagesState] = useState<Message[]>(() => {
+    const saved = localStorage.getItem('restaurant_messages');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [newOrdersCount, setNewOrdersCount] = useState(0);
 
   const resetNewOrdersCount = () => setNewOrdersCount(0);
@@ -87,6 +94,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [reviews]);
 
   useEffect(() => {
+    localStorage.setItem('restaurant_messages', JSON.stringify(messages));
+  }, [messages]);
+
+  useEffect(() => {
     // When orders change, check if it was an addition
     const savedOrdersStr = localStorage.getItem('restaurant_orders');
     const savedOrders: Order[] = savedOrdersStr ? JSON.parse(savedOrdersStr) : [];
@@ -103,6 +114,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const setMenu = (newMenu: MenuItem[]) => setMenuState(newMenu);
   const setReviews = (newReviews: Review[]) => setReviewsState(newReviews);
   const setOrders = (newOrders: Order[]) => setOrdersState(newOrders);
+  const setMessages = (newMessages: Message[]) => setMessagesState(newMessages);
 
   const login = (user: string, pass: string) => {
     const normalizedUser = user.trim().toLowerCase();
@@ -137,6 +149,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       menu, setMenu,
       reviews, setReviews,
       orders, setOrders,
+      messages, setMessages,
       newOrdersCount, resetNewOrdersCount,
       isAdmin, login, logout,
       updatePassword

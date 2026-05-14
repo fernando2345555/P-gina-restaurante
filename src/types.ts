@@ -10,7 +10,6 @@ export interface MenuItem {
   price: number;
   category: Category;
   image: string;
-  needsCookingTerm?: boolean;
 }
 
 export interface Review {
@@ -24,7 +23,6 @@ export interface Review {
 
 export interface OrderItem extends MenuItem {
   quantity: number;
-  cookingTerm?: CookingTerm;
 }
 
 export interface Order {
@@ -34,6 +32,13 @@ export interface Order {
   total: number;
   status: 'pending' | 'delivered';
   date: string;
+}
+
+export interface OperatingHour {
+  day: string;
+  open: string;
+  close: string;
+  isClosed: boolean;
 }
 
 export interface RestaurantConfig {
@@ -58,7 +63,17 @@ export interface RestaurantConfig {
   secondaryColor: string;
   accentColor: string;
   cardColor: string;
+  operatingHours: OperatingHour[];
+}
+
+export interface Message {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  date: string;
+  read: boolean;
 }
 
 export type Category = 'Cortes' | 'Entradas' | 'Bebidas' | 'Postres';
-export type CookingTerm = 'Azul' | 'Término Medio' | 'Tres Cuartos' | 'Bien Cocido';

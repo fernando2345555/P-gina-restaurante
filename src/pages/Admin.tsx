@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { LayoutDashboard, ShoppingBag, Utensils, MessageSquare, Settings, Check, Printer, Trash2, Edit3, X, Plus, Star } from 'lucide-react';
-import { Category, MenuItem } from '../types';
+import { LayoutDashboard, ShoppingBag, Utensils, MessageSquare, Settings, Check, Printer, Trash2, Edit3, X, Plus, Star, Clock, Calendar } from 'lucide-react';
+import { Category, MenuItem, OperatingHour } from '../types';
 import { CATEGORIES } from '../constants';
 
 export const Admin: React.FC = () => {
-  const { config, setConfig, menu, setMenu, orders, setOrders, reviews, setReviews, updatePassword, newOrdersCount, resetNewOrdersCount } = useApp();
-  const [activeTab, setActiveTab] = useState<'orders' | 'menu' | 'config' | 'reviews'>('orders');
+  const { config, setConfig, menu, setMenu, orders, setOrders, reviews, setReviews, messages, setMessages, updatePassword, newOrdersCount, resetNewOrdersCount } = useApp();
+  const [activeTab, setActiveTab] = useState<'orders' | 'menu' | 'config' | 'reviews' | 'messages'>('orders');
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [newPass, setNewPass] = useState('');
   const [showNotification, setShowNotification] = useState(false);
+  const pendingReviewsCount = reviews.filter(r => !r.approved).length;
+  const unreadMessagesCount = messages.filter(m => !m.read).length;
 
   // Trigger notification when new orders arrive
   React.useEffect(() => {
@@ -70,6 +72,12 @@ export const Admin: React.FC = () => {
     }
   };
 
+  const handleHourChange = (index: number, field: keyof OperatingHour, value: any) => {
+    const newHours = [...config.operatingHours];
+    newHours[index] = { ...newHours[index], [field]: value };
+    setConfig({ ...config, operatingHours: newHours });
+  };
+
   const removeGalleryImage = (index: number) => {
     const newImages = config.galleryImages.filter((_, i) => i !== index);
     setConfig({ ...config, galleryImages: newImages });
@@ -96,7 +104,6 @@ export const Admin: React.FC = () => {
       price: parseFloat(formData.get('price') as string),
       category: formData.get('category') as Category,
       image: formData.get('image') as string,
-      needsCookingTerm: formData.get('needsCookingTerm') === 'on',
     };
 
     if (editingItem) {
@@ -117,6 +124,17 @@ export const Admin: React.FC = () => {
   // Order management
   const markOrderDelivered = (id: string) => {
     setOrders(orders.map(o => o.id === id ? { ...o, status: 'delivered' } : o));
+  };
+
+  // Message management
+  const deleteMessage = (id: string) => {
+    if (confirm('¿Seguro que desea eliminar este mensaje?')) {
+      setMessages(messages.filter(m => m.id !== id));
+    }
+  };
+
+  const toggleMessageRead = (id: string) => {
+    setMessages(messages.map(m => m.id === id ? { ...m, read: !m.read } : m));
   };
 
   const printTicket = (order: any) => {
@@ -190,6 +208,7 @@ export const Admin: React.FC = () => {
               { id: 'orders', label: 'Monitor', icon: ShoppingBag },
               { id: 'menu', label: 'Carta', icon: Utensils },
               { id: 'reviews', label: 'Feedback', icon: MessageSquare },
+              { id: 'messages', label: 'Buzón', icon: LayoutDashboard },
               { id: 'config', label: 'Sístema', icon: Settings },
             ].map((tab) => (
               <button
@@ -207,6 +226,24 @@ export const Admin: React.FC = () => {
                     className="absolute -top-1 -right-1 w-4 h-4 bg-white text-black text-[8px] flex items-center justify-center rounded-full border border-[#ff4e00] font-black"
                   >
                     {newOrdersCount}
+                  </motion.span>
+                )}
+                {tab.id === 'reviews' && pendingReviewsCount > 0 && (
+                  <motion.span 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 text-black text-[8px] flex items-center justify-center rounded-full border border-black font-black"
+                  >
+                    {pendingReviewsCount}
+                  </motion.span>
+                )}
+                {tab.id === 'messages' && unreadMessagesCount > 0 && (
+                  <motion.span 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[8px] flex items-center justify-center rounded-full border border-black font-black"
+                  >
+                    {unreadMessagesCount}
                   </motion.span>
                 )}
               </button>
@@ -282,6 +319,7 @@ export const Admin: React.FC = () => {
                   {activeTab === 'orders' && 'Terminal de Pedidos'}
                   {activeTab === 'menu' && 'Gestor de Carta'}
                   {activeTab === 'reviews' && 'Reseñas Clientes'}
+                  {activeTab === 'messages' && 'Bandeja de Entrada'}
                   {activeTab === 'config' && 'Sístema Core'}
                 </h3>
                 <p className="text-xs text-white/30 mt-1 uppercase tracking-widest font-bold">Administrador: {config.name}</p>
@@ -364,24 +402,109 @@ export const Admin: React.FC = () => {
 
               {activeTab === 'reviews' && (
                 <div className="p-8 space-y-4">
-                  {reviews.slice().reverse().map((review) => (
-                    <div key={review.id} className="glass-panel p-6 rounded-2xl flex gap-4 items-start border-white/5">
-                      <div className="w-10 h-10 rounded-full bg-[#ff4e00]/10 flex items-center justify-center text-[#ff4e00] font-black text-lg">{review.name.charAt(0)}</div>
-                      <div className="flex-1">
-                        <div className="flex justify-between">
-                          <h5 className="font-black italic uppercase text-sm">{review.name} <span className="text-[10px] text-white/20 ml-2 font-normal">{review.date}</span></h5>
-                          <div className="flex text-[#ff4e00]">
-                            {[...Array(5)].map((_, i) => <Star key={i} size={8} fill={i < review.rating ? "currentColor" : "none"} className={i < review.rating ? "" : "opacity-20"} />)}
+                  {reviews.length > 0 ? (
+                    reviews.slice().reverse().map((review) => (
+                      <div key={review.id} className={`glass-panel p-6 rounded-2xl flex gap-6 items-start border-l-4 ${review.approved ? 'border-green-500/30' : 'border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.1)]'}`}>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 ${review.approved ? 'bg-white/5 text-white/40' : 'bg-yellow-500/20 text-yellow-500'}`}>
+                          {review.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <div className="flex items-center gap-3">
+                                <h5 className="font-black italic uppercase text-base">{review.name}</h5>
+                                {!review.approved && (
+                                  <span className="text-[7px] bg-yellow-500 text-black px-1.5 py-0.5 rounded font-black uppercase tracking-widest">Pendiente de Moderación</span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-white/20 uppercase tracking-[0.2em] font-bold mt-1">{review.date}</p>
+                            </div>
+                            <div className="flex gap-0.5 text-primary">
+                              {[...Array(5)].map((_, i) => (
+                                <Star key={i} size={10} fill={i < review.rating ? "currentColor" : "none"} className={i < review.rating ? "" : "opacity-10"} />
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-sm text-white/60 italic leading-relaxed bg-white/[0.02] p-4 rounded-xl border border-white/5">
+                            "{review.comment}"
+                          </p>
+                          <div className="flex gap-6 mt-6">
+                            <button 
+                              onClick={() => toggleReviewApproval(review.id)} 
+                              className={`flex items-center gap-2 text-[10px] uppercase font-black tracking-widest transition-all ${
+                                review.approved ? 'text-white/20 hover:text-yellow-500' : 'text-green-500 hover:scale-105'
+                              }`}
+                            >
+                              <Check size={14} />
+                              {review.approved ? 'Ocultar Reseña' : 'Aprobar y Publicar'}
+                            </button>
+                            <button 
+                              onClick={() => deleteReview(review.id)} 
+                              className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-white/10 hover:text-red-500 transition-all"
+                            >
+                              <Trash2 size={14} />
+                              Eliminar Permanente
+                            </button>
                           </div>
                         </div>
-                        <p className="text-xs text-white/50 italic mt-2 leading-relaxed">"{review.comment}"</p>
-                        <div className="flex gap-4 mt-4">
-                          <button onClick={() => toggleReviewApproval(review.id)} className={`text-[10px] uppercase font-bold ${review.approved ? 'text-yellow-500' : 'text-green-500'}`}>{review.approved ? 'Ocultar' : 'Aprobar'}</button>
-                          <button onClick={() => deleteReview(review.id)} className="text-[10px] uppercase font-bold text-white/20 hover:text-red-500">Eliminar</button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-32 text-center opacity-20 italic font-light tracking-[0.2em] uppercase">No hay testimonios recibidos todavía</div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'messages' && (
+                <div className="p-8 space-y-4">
+                  {messages.length > 0 ? (
+                    messages.slice().reverse().map((msg) => (
+                      <div key={msg.id} className={`glass-panel p-6 rounded-2xl flex gap-6 items-start border-l-4 ${msg.read ? 'border-white/5 opacity-60' : 'border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.1)]'}`}>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 ${msg.read ? 'bg-white/5 text-white/20' : 'bg-blue-500/20 text-blue-500'}`}>
+                          {msg.read ? <Check size={20} /> : <MessageSquare size={20} />}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h5 className="font-black italic uppercase text-base">{msg.name}</h5>
+                              <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">{msg.email} • {msg.date}</p>
+                            </div>
+                            {!msg.read && (
+                              <span className="text-[8px] bg-blue-500 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Nuevo</span>
+                            )}
+                          </div>
+                          <div className="mb-4">
+                            <p className="text-[10px] text-primary uppercase font-bold tracking-widest bg-primary/5 px-3 py-1 rounded-lg w-fit mt-2">
+                              Asunto: {msg.subject || 'Sin Asunto'}
+                            </p>
+                          </div>
+                          <p className="text-sm text-white/60 leading-relaxed bg-white/[0.02] p-4 rounded-xl border border-white/5 whitespace-pre-wrap">
+                            {msg.message}
+                          </p>
+                          <div className="flex gap-6 mt-6">
+                            <button 
+                              onClick={() => toggleMessageRead(msg.id)} 
+                              className={`flex items-center gap-2 text-[10px] uppercase font-black tracking-widest transition-all ${
+                                msg.read ? 'text-white/20 hover:text-blue-500' : 'text-blue-500'
+                              }`}
+                            >
+                              <Check size={14} />
+                              {msg.read ? 'Marcar como no leído' : 'Marcar como leído'}
+                            </button>
+                            <button 
+                              onClick={() => deleteMessage(msg.id)} 
+                              className="flex items-center gap-2 text-[10px] uppercase font-black tracking-widest text-white/10 hover:text-red-500 transition-all"
+                            >
+                              <Trash2 size={14} />
+                              Eliminar Conversación
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="py-32 text-center opacity-20 italic font-light tracking-[0.2em] uppercase">No hay mensajes directos todavía</div>
+                  )}
                 </div>
               )}
 
@@ -693,6 +816,76 @@ export const Admin: React.FC = () => {
                       </div>
                     </section>
 
+                    <div className="h-px bg-white/5" />
+
+                    <section className="space-y-8">
+                       <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                          <Clock size={20} />
+                        </div>
+                        <h4 className="text-xl font-black uppercase italic tracking-tighter accent-text">Horarios de Atención</h4>
+                      </div>
+
+                      <div className="glass-panel rounded-3xl overflow-hidden border-white/5">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-white/5 border-b border-white/5">
+                              <th className="px-6 py-4 text-[10px] uppercase font-black tracking-widest text-white/40">Día</th>
+                              <th className="px-6 py-4 text-[10px] uppercase font-black tracking-widest text-white/40">Apertura</th>
+                              <th className="px-6 py-4 text-[10px] uppercase font-black tracking-widest text-white/40">Cierre</th>
+                              <th className="px-6 py-4 text-[10px] uppercase font-black tracking-widest text-white/40 text-center">Estado</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5">
+                            {config.operatingHours.map((hour, idx) => (
+                              <tr key={hour.day} className={hour.isClosed ? 'opacity-40' : ''}>
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <Calendar size={14} className="text-primary" />
+                                    <span className="text-xs font-black uppercase italic tracking-tight">{hour.day}</span>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <input 
+                                    type="time" 
+                                    value={hour.open} 
+                                    disabled={hour.isClosed}
+                                    onChange={(e) => handleHourChange(idx, 'open', e.target.value)}
+                                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-primary/50 disabled:opacity-20"
+                                  />
+                                </td>
+                                <td className="px-6 py-4">
+                                  <input 
+                                    type="time" 
+                                    value={hour.close} 
+                                    disabled={hour.isClosed}
+                                    onChange={(e) => handleHourChange(idx, 'close', e.target.value)}
+                                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-primary/50 disabled:opacity-20"
+                                  />
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex justify-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleHourChange(idx, 'isClosed', !hour.isClosed)}
+                                      className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${
+                                        hour.isClosed 
+                                          ? 'bg-red-500/20 text-red-500 border border-red-500/30' 
+                                          : 'bg-green-500/20 text-green-500 border border-green-500/30 hover:bg-green-500/30'
+                                      }`}
+                                    >
+                                      {hour.isClosed ? 'Cerrado' : 'Abierto'}
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <p className="text-[9px] uppercase text-white/20 font-bold tracking-widest text-center italic">* Los cambios se guardan automáticamente en la configuración global.</p>
+                    </section>
+
                   <div className="h-px bg-white/5" />
 
                   <div className="space-y-8">
@@ -869,10 +1062,6 @@ export const Admin: React.FC = () => {
                 <div>
                   <label className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/30 mb-1 block">Nota de Cata / Descripción</label>
                   <textarea name="description" defaultValue={editingItem?.description} className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 resize-none font-mono text-xs" rows={2} />
-                </div>
-                <div className="flex items-center gap-3 p-5 bg-white/[0.02] rounded-2xl border border-white/5">
-                  <input name="needsCookingTerm" type="checkbox" defaultChecked={editingItem?.needsCookingTerm} className="w-5 h-5 accent-[#ff4e00] bg-transparent border-white/20" />
-                  <span className="text-[10px] font-black uppercase tracking-widest leading-none">Activar términos de cocción (Parrilla)</span>
                 </div>
                 <button type="submit" className="w-full py-4 bg-[#ff4e00] text-black font-black rounded-2xl shadow-[0_0_30px_rgba(255,78,0,0.4)] hover:bg-[#ff6a00] transition-all uppercase tracking-[0.2em] text-xs">
                   Sincronizar Plato

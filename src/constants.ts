@@ -1,4 +1,4 @@
-import { RestaurantConfig, MenuItem, Review, Order } from './types';
+import { RestaurantConfig, MenuItem, Review, Order, Category } from './types';
 
 export const INITIAL_CONFIG: RestaurantConfig = {
   name: "Zenith Grill",
@@ -28,6 +28,15 @@ export const INITIAL_CONFIG: RestaurantConfig = {
   secondaryColor: "#ffffff",
   accentColor: "#ff4e00",
   cardColor: "rgba(255,255,255,0.03)",
+  operatingHours: [
+    { day: 'Lunes', open: '12:00', close: '23:00', isClosed: false },
+    { day: 'Martes', open: '12:00', close: '23:00', isClosed: false },
+    { day: 'Miércoles', open: '12:00', close: '23:00', isClosed: false },
+    { day: 'Jueves', open: '12:00', close: '23:00', isClosed: false },
+    { day: 'Viernes', open: '12:00', close: '00:00', isClosed: false },
+    { day: 'Sábado', open: '12:00', close: '00:00', isClosed: false },
+    { day: 'Domingo', open: '12:00', close: '22:00', isClosed: false },
+  ],
 };
 
 export const INITIAL_MENU: MenuItem[] = [
@@ -37,8 +46,7 @@ export const INITIAL_MENU: MenuItem[] = [
     description: '400g de puro sabor, con el marmoleado perfecto.',
     price: 25.50,
     category: 'Cortes',
-    image: 'https://images.unsplash.com/photo-1546241072-48010ad28c2c?w=800&auto=format&fit=crop',
-    needsCookingTerm: true
+    image: 'https://images.unsplash.com/photo-1546241072-48010ad28c2c?w=800&auto=format&fit=crop'
   },
   {
     id: '2',
@@ -66,5 +74,4 @@ export const INITIAL_MENU: MenuItem[] = [
   }
 ];
 
-export const COOKING_TERMS = ['Azul', 'Término Medio', 'Tres Cuartos', 'Bien Cocido'];
-export const CATEGORIES: string[] = ['Cortes', 'Entradas', 'Bebidas', 'Postres'];
+export const CATEGORIES: Category[] = ['Cortes', 'Entradas', 'Bebidas', 'Postres'];

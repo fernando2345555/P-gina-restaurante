@@ -21,7 +21,7 @@ export const Reviews: React.FC = () => {
       comment,
       rating,
       date: new Date().toLocaleDateString(),
-      approved: true, 
+      approved: false, 
     };
 
     setReviews([...reviews, newReview]);
