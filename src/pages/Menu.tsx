@@ -4,9 +4,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Plus, ShoppingCart, Info, Flame, ChevronRight } from 'lucide-react';
 import { MenuItem, Category, OrderItem } from '../types';
 import { CATEGORIES } from '../constants';
+import { db } from '../lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
 export const Menu: React.FC = () => {
-  const { menu, setOrders, orders, config } = useApp();
+  const { menu, config } = useApp();
   const [activeCategory, setActiveCategory] = useState<Category>('Cortes');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [cart, setCart] = useState<OrderItem[]>([]);
@@ -32,31 +35,31 @@ export const Menu: React.FC = () => {
     window.open(`https://wa.me/${config.whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     if (!customerName) {
       alert('Por favor ingrese su nombre para el pedido.');
       return;
     }
     const orderId = Math.random().toString(36).substr(2, 9).toUpperCase();
     const newOrder = {
-      id: orderId,
       customerName,
       items: cart,
       total,
       status: 'pending' as const,
       date: new Date().toLocaleString(),
     };
-    setOrders([...orders, newOrder]);
-    
-    // Generate WhatsApp Message
-    const orderItemsText = cart.map(item => 
-      `• ${item.name} - $${item.price}`
-    ).join('\n');
 
-    const whatsappMessage = 
+    try {
+      await addDoc(collection(db, 'orders'), newOrder);
+      
+      // Generate WhatsApp Message
+      const orderItemsText = cart.map(item => 
+        `• ${item.name} - $${item.price}`
+      ).join('\n');
+
+      const whatsappMessage = 
 `🔥 *NUEVO PEDIDO - ${config.name}* 🔥
 ---------------------------
-🆔 *ID:* ${orderId}
 👤 *Cliente:* ${customerName}
 📅 *Fecha:* ${newOrder.date}
 ---------------------------
@@ -67,15 +70,17 @@ ${orderItemsText}
 ---------------------------
 📍 _Por favor contactar para coordinar entrega/retiro._`;
 
-    const whatsappUrl = `https://wa.me/${config.whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
-    
-    setCart([]);
-    setCustomerName('');
-    setShowCart(false);
-    
-    // Alert and Redirect
-    alert('Pedido realizado con éxito! Te estamos redirigiendo a WhatsApp para finalizar tu pedido.');
-    window.open(whatsappUrl, '_blank');
+      const whatsappUrl = `https://wa.me/${config.whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+      
+      setCart([]);
+      setCustomerName('');
+      setShowCart(false);
+      
+      alert('Pedido realizado con éxito! Te estamos redirigiendo a WhatsApp para finalizar tu pedido.');
+      window.open(whatsappUrl, '_blank');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'orders');
+    }
   };
 
   return (

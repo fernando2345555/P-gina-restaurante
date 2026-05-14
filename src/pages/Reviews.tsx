@@ -3,20 +3,22 @@ import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, MessageSquareQuote, Plus, Send, X } from 'lucide-react';
 import { Review } from '../types';
+import { db } from '../lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
 export const Reviews: React.FC = () => {
-  const { reviews, setReviews } = useApp();
+  const { reviews, config } = useApp();
   const [name, setName] = useState('');
   const [comment, setComment] = useState('');
   const [rating, setRating] = useState(5);
   const [showForm, setShowForm] = useState(false);
 
-  const handleSubmitReview = (e: React.FormEvent) => {
+  const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !comment) return;
 
-    const newReview: Review = {
-      id: Date.now().toString(),
+    const newReview = {
       name,
       comment,
       rating,
@@ -24,11 +26,16 @@ export const Reviews: React.FC = () => {
       approved: false, 
     };
 
-    setReviews([...reviews, newReview]);
-    setName('');
-    setComment('');
-    setRating(5);
-    setShowForm(false);
+    try {
+      await addDoc(collection(db, 'reviews'), newReview);
+      setName('');
+      setComment('');
+      setRating(5);
+      setShowForm(false);
+      alert('Reseña enviada con éxito. Aparecerá una vez que el administrador la apruebe.');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'reviews');
+    }
   };
 
   const publicReviews = reviews.filter(r => r.approved);
@@ -40,10 +47,10 @@ export const Reviews: React.FC = () => {
           <div className="absolute -top-10 -left-10 text-[120px] font-black text-white/[0.015] italic leading-none select-none uppercase font-serif tracking-tighter pointer-events-none">Vibe</div>
           <div className="max-w-2xl text-center lg:text-left relative z-10">
             <h2 className="text-5xl md:text-8xl font-black italic uppercase leading-[0.85] tracking-tighter mb-6 font-serif">
-              Voces de <span className="accent-text">la Brasa</span>
+              {config.reviewsPageTitle} <span className="accent-text">{config.reviewsPageSubTitle}</span>
             </h2>
             <p className="text-white/40 text-lg font-light italic max-w-lg mb-8">
-              ¿Ya probaste nuestros cortes? Queremos conocer tu opinión. Cada comentario nos ayuda a perfeccionar el arte de la parrilla.
+              {config.reviewsPageDescription}
             </p>
             <button
               onClick={() => setShowForm(true)}

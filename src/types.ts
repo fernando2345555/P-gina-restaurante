@@ -50,6 +50,7 @@ export interface RestaurantConfig {
   heroImage: string;
   primaryColor: string;
   adminEmail: string;
+  adminPassword?: string;
   siteName: string;
   galleryImages: string[];
   fontFamily: 'sans' | 'serif' | 'mono' | 'display';
@@ -64,6 +65,28 @@ export interface RestaurantConfig {
   accentColor: string;
   cardColor: string;
   operatingHours: OperatingHour[];
+  // Home Page Content
+  heroTagline: string;
+  heroSubTitle: string;
+  stats: { val: string; lab: string }[];
+  featuredTitle: string;
+  featuredSubTitle: string;
+  featuredDescription: string;
+  features: { title: string; desc: string }[];
+  ctaTitle: string;
+  ctaSubTitle: string;
+  reviewsTitle: string;
+  reviewsSubTitle: string;
+  // Reviews Page
+  reviewsPageTitle: string;
+  reviewsPageSubTitle: string;
+  reviewsPageDescription: string;
+  // Location Page
+  locationPageTitle: string;
+  locationPageDescription: string;
+  ctaDescription: string;
+  locationQuote: string;
+  locationAuthor: string;
 }
 
 export interface Message {

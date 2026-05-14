@@ -10,7 +10,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onNav, currentPage, onLoginClick }) => {
-  const { isAdmin, logout, config } = useApp();
+  const { isAdmin, logout, config, newOrdersCount } = useApp();
 
   const navItems = [
     { id: 'home', label: 'Inicio', icon: Info },
@@ -54,6 +54,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onNav, currentPage, onLoginClick
       <div className="flex items-center gap-4">
         {isAdmin && (
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => onNav('admin')}
+              className={`p-2 rounded-xl transition-all relative ${
+                currentPage === 'admin' 
+                  ? 'bg-primary/20 text-primary border border-primary/30' 
+                  : 'hover:bg-white/5 text-white/50 border border-transparent'
+              }`}
+            >
+              <LayoutDashboard size={20} />
+              {newOrdersCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce shadow-lg border-2 border-black">
+                  {newOrdersCount}
+                </span>
+              )}
+            </button>
             <div className="text-right hidden sm:block">
               <p className="text-[8px] text-white/30 uppercase tracking-[0.2em] font-bold">Admin Session</p>
               <p className="text-xs font-semibold text-white/80">Fernando Manager</p>

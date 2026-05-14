@@ -8,6 +8,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { LoginModal } from './components/LoginModal';
 import { WhatsAppButton } from './components/WhatsAppButton';
+import { LoginBar } from './components/LoginBar';
 import { Home } from './pages/Home';
 import { Menu } from './pages/Menu';
 import { Reviews } from './pages/Reviews';
@@ -46,7 +47,7 @@ function AppContent() {
       case 'menu': return <Menu />;
       case 'reviews': return <Reviews />;
       case 'location': return <Location />;
-      case 'admin': return <Admin />;
+      case 'admin': return <Admin onNav={setCurrentPage} />;
       default: return <Home onNav={setCurrentPage} />;
     }
   };
@@ -77,54 +78,60 @@ function AppContent() {
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        <Navbar 
-          currentPage={currentPage} 
-          onNav={setCurrentPage} 
-          onLoginClick={() => setIsLoginOpen(true)} 
-        />
+        {currentPage !== 'admin' && (
+          <Navbar 
+            currentPage={currentPage} 
+            onNav={setCurrentPage} 
+            onLoginClick={() => setIsLoginOpen(true)} 
+          />
+        )}
         
-        <main className="flex-1">
+        <main className={`flex-1 ${currentPage === 'admin' ? 'w-full h-screen' : ''}`}>
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPage}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: currentPage === 'admin' ? 0 : 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              exit={{ opacity: 0, y: currentPage === 'admin' ? 0 : -20 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
+              className={currentPage === 'admin' ? 'h-full' : ''}
             >
               {renderPage()}
             </motion.div>
           </AnimatePresence>
         </main>
 
-        <footer className="w-full px-8 py-4 flex flex-col sm:flex-row items-center justify-between text-[10px] uppercase tracking-widest text-gray-500 bg-black/50 z-10 border-t border-white/5 no-print mt-auto gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <p>{config.siteName} Management Pro v2.4.0</p>
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-[8px] opacity-40">Servidor Activo</span>
+        {currentPage !== 'admin' && (
+          <footer className="w-full px-8 py-4 flex flex-col sm:flex-row items-center justify-between text-[10px] uppercase tracking-widest text-gray-500 bg-black/50 z-10 border-t border-white/5 no-print mt-auto gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <p>{config.siteName} Management Pro v2.4.0</p>
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="text-[8px] opacity-40">Servidor Activo</span>
+              </div>
             </div>
-          </div>
-          
-          <p>© {new Date().getFullYear()} - {config.name} | {config.adminEmail}</p>
-          
-          <div className="flex items-center gap-6">
-            <button 
-              onClick={() => isAdmin ? setCurrentPage('admin') : setIsLoginOpen(true)}
-              className="opacity-20 hover:opacity-100 transition-opacity flex items-center gap-2 group"
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-white/20 group-hover:bg-[#ff4e00]" />
-              Soporte Técnico
-            </button>
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span>Sistema Protegido</span>
+            
+            <p>© {new Date().getFullYear()} - {config.name} | {config.adminEmail}</p>
+            
+            <div className="flex items-center gap-6">
+              <button 
+                onClick={() => isAdmin ? setCurrentPage('admin') : setIsLoginOpen(true)}
+                className="opacity-20 hover:opacity-100 transition-opacity flex items-center gap-2 group"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-white/20 group-hover:bg-[#ff4e00]" />
+                Soporte Técnico
+              </button>
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span>Sistema Protegido</span>
+              </div>
             </div>
-          </div>
-        </footer>
+          </footer>
+        )}
       </div>
 
-      <WhatsAppButton />
+      {currentPage !== 'admin' && <WhatsAppButton />}
+      {currentPage !== 'admin' && <LoginBar />}
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </div>
   );

@@ -31,11 +31,11 @@ export const Home: React.FC<HomeProps> = ({ onNav }) => {
             transition={{ duration: 1, ease: "easeOut" }}
           >
             <div className="flex items-center gap-3 text-[#ff4e00] bg-[#ff4e00]/10 w-fit px-5 py-2 rounded-full border border-[#ff4e00]/20 mb-10 font-mono text-[10px] uppercase tracking-[0.4em] backdrop-blur-md">
-              <Flame size={16} className="animate-pulse" /> La Excelencia en la Brasa
+              <Flame size={16} className="animate-pulse" /> {config.heroTagline}
             </div>
             <h1 className="text-7xl md:text-[11rem] font-black font-serif leading-[0.75] tracking-tighter mb-10 uppercase italic">
               {config.name} <br />
-              <span className="accent-text opacity-90">Grill Pro</span>
+              <span className="accent-text opacity-90">{config.heroSubTitle}</span>
             </h1>
             <p className="text-xl md:text-2xl text-white/40 mb-12 leading-relaxed font-light font-sans max-w-2xl border-l border-[#ff4e00]/30 pl-8">
               {config.description}
@@ -68,12 +68,7 @@ export const Home: React.FC<HomeProps> = ({ onNav }) => {
       <section className="py-24 px-4 md:px-20 bg-[#0a0a0a] relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,78,0,0.05)_0%,transparent_70%)]" />
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 relative z-10">
-          {[
-            { val: '15+', lab: 'Años de Experiencia' },
-            { val: '40+', lab: 'Cortes Seleccionados' },
-            { val: '10k+', lab: 'Clientes Felices' },
-            { val: '24h', lab: 'Maduración Dry-Aged' },
-          ].map((stat, i) => (
+          {config.stats.map((stat, i) => (
             <motion.div 
               key={i}
               initial={{ opacity: 0, y: 20 }}
@@ -95,19 +90,15 @@ export const Home: React.FC<HomeProps> = ({ onNav }) => {
           <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
             <div className="max-w-2xl">
               <span className="text-[10px] uppercase tracking-[0.5em] text-[#ff4e00] font-black mb-4 block">Selección de Autor</span>
-              <h2 className="text-5xl md:text-7xl font-black italic uppercase font-serif tracking-tighter">Nuestros Secretos <br /> <span className="accent-text">Mejor Guardados</span></h2>
+              <h2 className="text-5xl md:text-7xl font-black italic uppercase font-serif tracking-tighter">{config.featuredTitle} <br /> <span className="accent-text">{config.featuredSubTitle}</span></h2>
             </div>
             <p className="text-white/40 max-w-sm text-sm italic font-light leading-relaxed">
-              Cada bocado es el resultado de un proceso artesanal donde el fuego y el tiempo son los únicos protagonistas.
+              {config.featuredDescription}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { title: 'Cortes Premium', desc: 'Seleccionamos los mejores ejemplares de campo para asegurar ternura y sabor superior.', icon: Flame },
-              { title: 'Cocción Lenta', desc: 'Nuestra madera de quebracho aporta un aroma ahumado profundo y único.', icon: Flame },
-              { title: 'Vinos de Autor', desc: 'Una cava privada con las etiquetas más exclusivas de la región.', icon: Flame },
-            ].map((feature, i) => (
+            {config.features.map((feature, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -117,7 +108,7 @@ export const Home: React.FC<HomeProps> = ({ onNav }) => {
                 className="p-12 glass-dark rounded-[40px] group hover:border-[#ff4d00]/30 transition-all duration-700 flex flex-col items-center text-center border border-white/5"
               >
                 <div className="w-16 h-16 bg-white/5 rounded-3xl flex items-center justify-center mb-8 group-hover:bg-[#ff4e00] group-hover:text-black transition-all duration-500 shadow-xl">
-                  <feature.icon size={30} />
+                  <Flame size={30} />
                 </div>
                 <h3 className="text-2xl font-black italic uppercase mb-4 tracking-tight">{feature.title}</h3>
                 <p className="text-white/40 font-light text-sm leading-relaxed">{feature.desc}</p>
@@ -139,10 +130,9 @@ export const Home: React.FC<HomeProps> = ({ onNav }) => {
           viewport={{ once: true }}
           className="relative z-10 max-w-3xl mx-auto"
         >
-          <h2 className="text-5xl md:text-8xl font-black italic uppercase font-serif mb-8 tracking-tighter leading-none">¿Listo para la <br /><span className="accent-text">Experiencia Zenith?</span></h2>
+          <h2 className="text-5xl md:text-8xl font-black italic uppercase font-serif mb-8 tracking-tighter leading-none">{config.ctaTitle} <br /><span className="accent-text">{config.ctaSubTitle}</span></h2>
           <p className="text-xl text-white/40 mb-12 font-light italic">
-            Asegura tu mesa ahora y déjate envolver por la maestría del fuego. <br />
-            No es solo una cena, es un ritual.
+            {config.ctaDescription}
           </p>
           <a
             href={`https://wa.me/${config.whatsappNumber}?text=Hola!%20Me%20gustaría%20reservar%20una%20mesa.`}
@@ -160,7 +150,7 @@ export const Home: React.FC<HomeProps> = ({ onNav }) => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <span className="text-[10px] uppercase tracking-[0.5em] text-[#ff4e00] font-black mb-4 block">Experiencias Reales</span>
-            <h2 className="text-5xl md:text-7xl font-black italic uppercase font-serif tracking-tighter">La Comunidad <br /><span className="accent-text">Zenith Grill</span></h2>
+            <h2 className="text-5xl md:text-7xl font-black italic uppercase font-serif tracking-tighter">{config.reviewsTitle} <br /><span className="accent-text">{config.reviewsSubTitle}</span></h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

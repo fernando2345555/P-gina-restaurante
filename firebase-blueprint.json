@@ -1,0 +1,123 @@
+{
+  "entities": {
+    "RestaurantConfig": {
+      "title": "Restaurant Configuration",
+      "description": "Global settings for the restaurant",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "cuisineType": { "type": "string" },
+        "whatsappNumber": { "type": "string" },
+        "address": { "type": "string" },
+        "heroImage": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "adminEmail": { "type": "string" },
+        "siteName": { "type": "string" },
+        "galleryImages": { "type": "array", "items": { "type": "string" } },
+        "fontFamily": { "type": "string", "enum": ["sans", "serif", "mono", "display"] },
+        "secondaryAdminEmail": { "type": "string" },
+        "secondaryAdminActive": { "type": "boolean" },
+        "locationMapUrl": { "type": "string" },
+        "logoImage": { "type": "string" },
+        "locationImage": { "type": "string" },
+        "locationType": { "type": "string", "enum": ["map", "image"] },
+        "secondaryLocationImage": { "type": "string" },
+        "secondaryColor": { "type": "string" },
+        "accentColor": { "type": "string" },
+        "cardColor": { "type": "string" },
+        "heroTagline": { "type": "string" },
+        "heroSubTitle": { "type": "string" },
+        "featuredTitle": { "type": "string" },
+        "featuredSubTitle": { "type": "string" },
+        "featuredDescription": { "type": "string" },
+        "ctaTitle": { "type": "string" },
+        "ctaSubTitle": { "type": "string" },
+        "reviewsTitle": { "type": "string" },
+        "reviewsSubTitle": { "type": "string" },
+        "reviewsPageTitle": { "type": "string" },
+        "reviewsPageSubTitle": { "type": "string" },
+        "reviewsPageDescription": { "type": "string" },
+        "locationPageTitle": { "type": "string" },
+        "locationPageDescription": { "type": "string" },
+        "ctaDescription": { "type": "string" },
+        "locationQuote": { "type": "string" },
+        "locationAuthor": { "type": "string" }
+      }
+    },
+    "MenuItem": {
+      "title": "Menu Item",
+      "description": "A dish or beverage in the menu",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "image": { "type": "string" }
+      },
+      "required": ["name", "price", "category"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Customer feedback",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "comment": { "type": "string" },
+        "rating": { "type": "number" },
+        "date": { "type": "string" },
+        "approved": { "type": "boolean" }
+      },
+      "required": ["name", "comment", "rating"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string" },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "delivered"] },
+        "date": { "type": "string" }
+      },
+      "required": ["customerName", "total", "status"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Contact form message",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "date": { "type": "string" },
+        "read": { "type": "boolean" }
+      },
+      "required": ["name", "email", "message"]
+    }
+  },
+  "firestore": {
+    "settings/config": {
+      "schema": "RestaurantConfig",
+      "description": "Global config"
+    },
+    "menu": {
+      "schema": "MenuItem",
+      "description": "Product catalog"
+    },
+    "orders": {
+      "schema": "Order",
+      "description": "Sales records"
+    },
+    "reviews": {
+      "schema": "Review",
+      "description": "Customer feedback collection"
+    },
+    "messages": {
+      "schema": "Message",
+      "description": "Customer inquiries"
+    }
+  }
+}

@@ -2,6 +2,9 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 import { motion } from 'motion/react';
 import { MapPin, Phone, Clock, ExternalLink } from 'lucide-react';
+import { db } from '../lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
 export const Location: React.FC = () => {
   const { config } = useApp();
@@ -12,9 +15,9 @@ export const Location: React.FC = () => {
         <header className="mb-20 relative">
           <div className="absolute -top-10 -left-10 text-[120px] font-black text-white/[0.015] italic leading-none select-none uppercase font-serif tracking-tighter pointer-events-none">Map</div>
           <h2 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter relative z-10 leading-none font-serif">
-            Nuestra <span className="accent-text">Sede</span>
+            {config.locationPageTitle} <span className="accent-text">Sede</span>
           </h2>
-          <p className="text-white/40 text-sm mt-4 font-mono tracking-[0.2em] uppercase max-w-xl">Encuentra el templo de la brasa en el corazón de la ciudad.</p>
+          <p className="text-white/40 text-sm mt-4 font-mono tracking-[0.2em] uppercase max-w-xl">{config.locationPageDescription}</p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
@@ -70,8 +73,8 @@ export const Location: React.FC = () => {
             </div>
             
             <div className="p-8 glass-panel rounded-[40px] border-primary/10 max-w-lg">
-               <p className="text-sm italic text-white/40 leading-relaxed font-light">"El fuego no solo cocina la carne, forja momentos inolvidables. Te esperamos en la mesa para compartir el secreto de nuestra parrilla."</p>
-               <p className="text-[10px] font-black accent-text uppercase tracking-[0.2em] mt-6">— Fernando, Master Grill</p>
+               <p className="text-sm italic text-white/40 leading-relaxed font-light">"{config.locationQuote}"</p>
+               <p className="text-[10px] font-black accent-text uppercase tracking-[0.2em] mt-6">— {config.locationAuthor}</p>
             </div>
           </motion.div>
 
@@ -181,7 +184,6 @@ export const Location: React.FC = () => {
 };
 
 const ContactForm: React.FC = () => {
-  const { messages, setMessages } = useApp();
   const [formData, setFormData] = React.useState({
     name: '',
     email: '',
@@ -190,22 +192,24 @@ const ContactForm: React.FC = () => {
   });
   const [isSent, setIsSent] = React.useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) return;
 
     const newMessage = {
-      id: Math.random().toString(36).substr(2, 9),
       ...formData,
       date: new Date().toLocaleString(),
       read: false
     };
 
-    setMessages([...messages, newMessage]);
-    setIsSent(true);
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    
-    setTimeout(() => setIsSent(false), 5000);
+    try {
+      await addDoc(collection(db, 'messages'), newMessage);
+      setIsSent(true);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+      setTimeout(() => setIsSent(false), 5000);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'messages');
+    }
   };
 
   return (

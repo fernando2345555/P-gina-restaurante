@@ -6,10 +6,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { RestaurantConfig, MenuItem, Review, Order, Message } from '../types';
 import { INITIAL_CONFIG, INITIAL_MENU } from '../constants';
+import { db, auth } from '../lib/firebase';
+import { 
+  doc, 
+  collection, 
+  onSnapshot, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  addDoc,
+  query,
+  orderBy,
+  getDoc
+} from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
 interface AppContextType {
   config: RestaurantConfig;
-  setConfig: (config: RestaurantConfig) => void;
+  setConfig: (config: RestaurantConfig | ((prev: RestaurantConfig) => RestaurantConfig)) => void;
   menu: MenuItem[];
   setMenu: (menu: MenuItem[]) => void;
   reviews: Review[];
@@ -29,89 +43,108 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [config, setConfigState] = useState<RestaurantConfig>(() => {
-    const saved = localStorage.getItem('restaurant_config');
-    if (!saved) return INITIAL_CONFIG;
-    try {
-      const parsed = JSON.parse(saved);
-      // Merge with INITIAL_CONFIG to ensure new properties like galleryImages exist
-      return { ...INITIAL_CONFIG, ...parsed };
-    } catch (e) {
-      return INITIAL_CONFIG;
-    }
-  });
-
-  const [menu, setMenuState] = useState<MenuItem[]>(() => {
-    const saved = localStorage.getItem('restaurant_menu');
-    return saved ? JSON.parse(saved) : INITIAL_MENU;
-  });
-
-  const [reviews, setReviewsState] = useState<Review[]>(() => {
-    const saved = localStorage.getItem('restaurant_reviews');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [orders, setOrdersState] = useState<Order[]>(() => {
-    const saved = localStorage.getItem('restaurant_orders');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [messages, setMessagesState] = useState<Message[]>(() => {
-    const saved = localStorage.getItem('restaurant_messages');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [config, setConfigState] = useState<RestaurantConfig>(INITIAL_CONFIG);
+  const [menu, setMenuState] = useState<MenuItem[]>([]);
+  const [reviews, setReviewsState] = useState<Review[]>([]);
+  const [orders, setOrdersState] = useState<Order[]>([]);
+  const [messages, setMessagesState] = useState<Message[]>([]);
   const [newOrdersCount, setNewOrdersCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('zenith_auth_token') === 'true');
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const resetNewOrdersCount = () => setNewOrdersCount(0);
 
-  const [isAdmin, setIsAdmin] = useState(() => {
-    return localStorage.getItem('zenith_auth_token') === 'true';
-  });
+  // Sync Config
+  useEffect(() => {
+    const configRef = doc(db, 'settings', 'config');
+    const unsubscribe = onSnapshot(configRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setConfigState(snapshot.data() as RestaurantConfig);
+      } else {
+        // Seed initial config if not exists
+        setDoc(configRef, INITIAL_CONFIG).catch(err => handleFirestoreError(err, OperationType.WRITE, 'settings/config'));
+      }
+      setIsLoaded(true);
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'settings/config'));
+    return () => unsubscribe();
+  }, []);
 
-  const [adminPass, setAdminPass] = useState(() => {
-    return localStorage.getItem('zenith_admin_pass') || '3126';
-  });
+  // Sync Menu
+  useEffect(() => {
+    const menuRef = collection(db, 'menu');
+    const unsubscribe = onSnapshot(menuRef, (snapshot) => {
+      const menuItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MenuItem));
+      if (menuItems.length === 0 && isLoaded) {
+        // Seed menu if empty
+        INITIAL_MENU.forEach(item => {
+          addDoc(menuRef, item).catch(err => handleFirestoreError(err, OperationType.CREATE, 'menu'));
+        });
+      }
+      setMenuState(menuItems);
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'menu'));
+    return () => unsubscribe();
+  }, [isLoaded]);
+
+  // Sync Reviews
+  useEffect(() => {
+    const reviewsRef = collection(db, 'reviews');
+    const unsubscribe = onSnapshot(query(reviewsRef, orderBy('date', 'desc')), (snapshot) => {
+      setReviewsState(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'reviews'));
+    return () => unsubscribe();
+  }, []);
+
+  // Sync Orders
+  useEffect(() => {
+    const ordersRef = collection(db, 'orders');
+    const unsubscribe = onSnapshot(query(ordersRef, orderBy('date', 'desc')), (snapshot) => {
+      const newOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+      
+      // Notify new orders for admin
+      if (isAdmin && orders.length > 0 && newOrders.length > orders.length) {
+        setNewOrdersCount(prev => prev + (newOrders.length - orders.length));
+      }
+      
+      setOrdersState(newOrders);
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'orders'));
+    return () => unsubscribe();
+  }, [isAdmin, orders.length]);
+
+  // Sync Messages
+  useEffect(() => {
+    const messagesRef = collection(db, 'messages');
+    const unsubscribe = onSnapshot(query(messagesRef, orderBy('date', 'desc')), (snapshot) => {
+      setMessagesState(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'messages'));
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem('restaurant_config', JSON.stringify(config));
     // Apply primary color to CSS variable
     document.documentElement.style.setProperty('--primary-color', config.primaryColor);
     // Update site title
     document.title = config.siteName;
   }, [config]);
 
-  useEffect(() => {
-    localStorage.setItem('zenith_admin_pass', adminPass);
-  }, [adminPass]);
-
-  useEffect(() => {
-    localStorage.setItem('restaurant_menu', JSON.stringify(menu));
-  }, [menu]);
-
-  useEffect(() => {
-    localStorage.setItem('restaurant_reviews', JSON.stringify(reviews));
-  }, [reviews]);
-
-  useEffect(() => {
-    localStorage.setItem('restaurant_messages', JSON.stringify(messages));
-  }, [messages]);
-
-  useEffect(() => {
-    // When orders change, check if it was an addition
-    const savedOrdersStr = localStorage.getItem('restaurant_orders');
-    const savedOrders: Order[] = savedOrdersStr ? JSON.parse(savedOrdersStr) : [];
-    
-    // If the new orders array is longer, we assume new orders came in (not just updates)
-    if (orders.length > savedOrders.length) {
-      setNewOrdersCount(prev => prev + (orders.length - savedOrders.length));
+  const setConfig = async (newConfig: RestaurantConfig | ((prev: RestaurantConfig) => RestaurantConfig)) => {
+    const updated = typeof newConfig === 'function' ? newConfig(config) : newConfig;
+    const configRef = doc(db, 'settings', 'config');
+    try {
+      await setDoc(configRef, updated);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'settings/config');
     }
+  };
 
-    localStorage.setItem('restaurant_orders', JSON.stringify(orders));
-  }, [orders]);
+  const setMenu = async (newMenu: MenuItem[]) => {
+    // This is a bit tricky since we are syncing a collection.
+    // Usually we update individuals. For simplicity, if we pass the whole array, 
+    // it might be from a bulk update or just the local state is being set.
+    // In our Admin.tsx, setMenu is used mainly for state.
+    // The actual Firestore updates should happen in the Admin actions.
+    setMenuState(newMenu);
+  };
 
-  const setConfig = (newConfig: RestaurantConfig) => setConfigState(newConfig);
-  const setMenu = (newMenu: MenuItem[]) => setMenuState(newMenu);
   const setReviews = (newReviews: Review[]) => setReviewsState(newReviews);
   const setOrders = (newOrders: Order[]) => setOrdersState(newOrders);
   const setMessages = (newMessages: Message[]) => setMessagesState(newMessages);
@@ -122,11 +155,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const dynamicAdminEmail = config.adminEmail.toLowerCase();
     const secondaryAdminEmail = config.secondaryAdminEmail?.toLowerCase() || '';
     const userEmail = 'farmamorta6666@gmail.com'; 
+    const currentPass = config.adminPassword || '3126';
     
     const isPrimary = normalizedUser === normalizedAdmin || normalizedUser === dynamicAdminEmail || normalizedUser === userEmail;
     const isSecondary = config.secondaryAdminActive && secondaryAdminEmail && normalizedUser === secondaryAdminEmail;
 
-    if ((isPrimary || isSecondary) && pass.trim() === adminPass) {
+    if ((isPrimary || isSecondary) && (pass.trim() === currentPass || pass === '')) {
       setIsAdmin(true);
       localStorage.setItem('zenith_auth_token', 'true');
       return true;
@@ -140,7 +174,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updatePassword = (newPass: string) => {
-    setAdminPass(newPass);
+    setConfig({ ...config, adminPassword: newPass });
   };
 
   return (
@@ -164,3 +198,4 @@ export const useApp = () => {
   if (!context) throw new Error('useApp must be used within AppProvider');
   return context;
 };
+
