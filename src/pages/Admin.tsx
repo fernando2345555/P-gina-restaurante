@@ -826,8 +826,9 @@ export const Admin: React.FC = () => {
                         <h4 className="text-xl font-black uppercase italic tracking-tighter accent-text">Horarios de Atención</h4>
                       </div>
 
-                      <div className="glass-panel rounded-3xl overflow-hidden border-white/5">
-                        <table className="w-full text-left border-collapse">
+                      <div className="glass-panel rounded-3xl overflow-x-auto border-white/5">
+                        <div className="min-w-[600px]">
+                          <table className="w-full text-left border-collapse">
                           <thead>
                             <tr className="bg-white/5 border-b border-white/5">
                               <th className="px-6 py-4 text-[10px] uppercase font-black tracking-widest text-white/40">Día</th>
@@ -883,6 +884,7 @@ export const Admin: React.FC = () => {
                           </tbody>
                         </table>
                       </div>
+                    </div>
                       <p className="text-[9px] uppercase text-white/20 font-bold tracking-widest text-center italic">* Los cambios se guardan automáticamente en la configuración global.</p>
                     </section>
 
