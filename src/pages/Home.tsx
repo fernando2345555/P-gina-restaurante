@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { SEO } from '../components/SEO';
 import { motion } from 'motion/react';
 import { Flame, ChevronRight, Star } from 'lucide-react';
 
@@ -12,6 +13,7 @@ export const Home: React.FC<HomeProps> = ({ onNav }) => {
 
   return (
     <div className="min-h-screen">
+      <SEO />
       {/* Hero Section */}
       <section className="relative h-screen flex items-center px-4 md:px-20 overflow-hidden">
         <div className="absolute inset-0 z-0">
@@ -23,8 +25,8 @@ export const Home: React.FC<HomeProps> = ({ onNav }) => {
             alt="Grill background"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
         </div>
 
         <div className="relative z-10 max-w-5xl">
@@ -33,8 +35,14 @@ export const Home: React.FC<HomeProps> = ({ onNav }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
           >
-            <div className="flex items-center gap-3 text-primary bg-primary/10 w-fit px-5 py-2 rounded-full border border-primary/20 mb-8 font-mono text-[9px] uppercase tracking-[0.5em] backdrop-blur-md">
-              <Flame size={14} className="animate-pulse" /> {config.heroTagline}
+            <div className="flex items-center gap-3 mb-8">
+              <div className="vercel-badge">
+                <Flame size={12} className="text-primary mr-1.5" />
+                <span>{config.heroTagline}</span>
+              </div>
+              <div className="vercel-badge font-mono lowercase">
+                v1.0.4-production
+              </div>
             </div>
             <h1 className="text-6xl md:text-[10rem] font-black font-serif leading-[0.8] tracking-tighter mb-8 uppercase italic">
               {config.name.split(' ')[0]} <br />
@@ -81,7 +89,7 @@ export const Home: React.FC<HomeProps> = ({ onNav }) => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-24 px-4 md:px-20 bg-[#0a0a0a] relative overflow-hidden">
+      <section className="py-24 px-4 md:px-20 bg-black relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,78,0,0.05)_0%,transparent_70%)]" />
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 relative z-10">
           {config.stats.map((stat, i) => (

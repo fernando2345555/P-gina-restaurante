@@ -13,6 +13,7 @@ import { Menu } from './pages/Menu';
 import { Reviews } from './pages/Reviews';
 import { Location } from './pages/Location';
 import { Admin } from './pages/Admin';
+import { SEO } from './components/SEO';
 import { AnimatePresence, motion } from 'motion/react';
 import { Flame } from 'lucide-react';
 
@@ -53,17 +54,6 @@ function AppContent() {
       default: return <Home onNav={setCurrentPage} />;
     }
   };
-
-  useEffect(() => {
-    const titles: Record<string, string> = {
-      home: 'Inicio',
-      menu: 'Nuestra Carta',
-      reviews: 'Experiencias',
-      location: 'Ubicación',
-      admin: 'Technical Access'
-    };
-    document.title = `${titles[currentPage] || 'Zenith Grill'} | Zenith Grill - Templo de la Brasa`;
-  }, [currentPage]);
 
   return (
     <div className={`relative min-h-screen ${config.fontFamily ? `font-app-${config.fontFamily}` : 'font-sans'} bg-[#0a0a0a] overflow-x-hidden transition-all duration-700`}>

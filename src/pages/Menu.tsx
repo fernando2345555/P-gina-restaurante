@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { SEO } from '../components/SEO';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, ShoppingCart, Info, Flame, ChevronRight } from 'lucide-react';
 import { MenuItem, Category, OrderItem } from '../types';
@@ -85,6 +86,7 @@ ${orderItemsText}
 
   return (
     <div className="pt-28 pb-20 px-4 md:px-20 min-h-screen">
+      <SEO title="Nuestra Carta" description="Explora nuestra selección premium de cortes madurados, entradas y postres en Zenith Grill." />
       <div className="max-w-7xl mx-auto">
         <header className="mb-16 relative">
           <div className="absolute -top-10 -left-10 text-[120px] font-black text-white/[0.015] italic leading-none select-none uppercase font-serif tracking-tighter pointer-events-none">Grill</div>

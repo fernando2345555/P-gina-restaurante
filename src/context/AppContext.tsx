@@ -20,7 +20,12 @@ import {
   getDoc,
   where
 } from 'firebase/firestore';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { 
+  onAuthStateChanged, 
+  User,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail
+} from 'firebase/auth';
 import { googleProvider, signInWithPopup } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreUtils';
 
@@ -40,6 +45,8 @@ interface AppContextType {
   isAdmin: boolean;
   user: User | null;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, pass: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   login: (user: string, pass: string) => boolean;
   logout: () => void;
   updatePassword: (pass: string) => void;
@@ -55,8 +62,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [messages, setMessagesState] = useState<Message[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [newOrdersCount, setNewOrdersCount] = useState(0);
-  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('zenith_auth_token') === 'true');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Sync admin state with localStorage AND auth
+  useEffect(() => {
+    const storedAuth = localStorage.getItem('zenith_auth_token') === 'true';
+    if (storedAuth && !user) {
+      // Potentially admin, but wait for auth to fetch admin data
+    }
+  }, [user]);
 
   // Firebase Auth Listener
   useEffect(() => {
@@ -69,6 +84,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setIsAdmin(true);
           localStorage.setItem('zenith_auth_token', 'true');
         }
+      } else {
+        // If not authenticated in Firebase, we are effectively not an admin for DB purposes
+        setIsAdmin(false);
+        localStorage.removeItem('zenith_auth_token');
       }
     });
     return () => unsubscribe();
@@ -77,8 +96,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const signInWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      throw error;
+    }
+  };
+
+  const signInWithEmail = async (email: string, pass: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (error: any) {
+      console.error('Email login failed:', error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error: any) {
+      console.error('Password reset failed:', error);
+      throw error;
     }
   };
 
@@ -145,23 +183,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Sync Reviews
   useEffect(() => {
     const reviewsRef = collection(db, 'reviews');
-    // Public only sees approved reviews
-    const q = isAdmin 
+    // Public only sees approved reviews. Admin sees all.
+    // CRITICAL: We only use the admin query IF we have a verified user session.
+    const q = (isAdmin && user)
       ? query(reviewsRef, orderBy('date', 'desc'))
       : query(reviewsRef, where('approved', '==', true), orderBy('date', 'desc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setReviewsState(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
     }, (err) => {
-      // Don't show error for public list if it fails due to permissions (unlikely with where clause)
-      if (isAdmin) handleFirestoreError(err, OperationType.LIST, 'reviews');
+      if (isAdmin && user) handleFirestoreError(err, OperationType.LIST, 'reviews');
     });
     return () => unsubscribe();
-  }, [isAdmin]);
+  }, [isAdmin, user]);
 
   // Sync Orders
   useEffect(() => {
-    if (!isAdmin) {
+    if (!isAdmin || !user) {
       setOrdersState([]);
       return;
     }
@@ -177,11 +215,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setOrdersState(newOrders);
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'orders'));
     return () => unsubscribe();
-  }, [isAdmin, orders.length]);
+  }, [isAdmin, user, orders.length]);
 
   // Sync Messages
   useEffect(() => {
-    if (!isAdmin) {
+    if (!isAdmin || !user) {
       setMessagesState([]);
       return;
     }
@@ -190,7 +228,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setMessagesState(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'messages'));
     return () => unsubscribe();
-  }, [isAdmin]);
+  }, [isAdmin, user]);
 
   useEffect(() => {
     // Apply primary color to CSS variable
@@ -259,7 +297,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       orders, setOrders,
       messages, setMessages,
       newOrdersCount, resetNewOrdersCount,
-      isAdmin, user, signInWithGoogle, login, logout,
+      isAdmin, user, signInWithGoogle, signInWithEmail, resetPassword, login, logout,
       updatePassword
     }}>
       {children}

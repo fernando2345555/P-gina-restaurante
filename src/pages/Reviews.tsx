@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { SEO } from '../components/SEO';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, MessageSquareQuote, Plus, Send, X } from 'lucide-react';
 import { Review } from '../types';
@@ -42,6 +43,7 @@ export const Reviews: React.FC = () => {
 
   return (
     <div className="pt-28 pb-20 px-4 md:px-20 min-h-screen">
+      <SEO title="Experiencias" description="Lee las opiniones de nuestros clientes sobre su experiencia en Zenith Grill, el templo de la brasa." />
       <div className="max-w-7xl mx-auto">
         <header className="flex flex-col lg:flex-row items-center justify-between gap-12 mb-20 relative">
           <div className="absolute -top-10 -left-10 text-[120px] font-black text-white/[0.015] italic leading-none select-none uppercase font-serif tracking-tighter pointer-events-none">Vibe</div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { SEO } from '../components/SEO';
 import { motion } from 'motion/react';
 import { MapPin, Phone, Clock, ExternalLink } from 'lucide-react';
 import { db } from '../lib/firebase';
@@ -11,6 +12,7 @@ export const Location: React.FC = () => {
 
   return (
     <div className="pt-28 pb-20 px-4 md:px-20 min-h-screen">
+      <SEO title="Ubicación y Contacto" description="Encuentra nuestra ubicación en Buenos Aires y contáctanos para reservas o eventos especiales en Zenith Grill." />
       <div className="max-w-7xl mx-auto">
         <header className="mb-20 relative">
           <div className="absolute -top-10 -left-10 text-[120px] font-black text-white/[0.015] italic leading-none select-none uppercase font-serif tracking-tighter pointer-events-none">Map</div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { SEO } from '../components/SEO';
 import { motion, AnimatePresence } from 'motion/react';
 import { LayoutDashboard, ShoppingBag, Utensils, MessageSquare, Settings, Check, Printer, Trash2, Edit3, X, Plus, Star, Clock, Calendar } from 'lucide-react';
 import { Category, MenuItem, OperatingHour, Review, Message, Order } from '../types';
@@ -258,6 +259,7 @@ export const Admin: React.FC<{ onNav: (page: string) => void }> = ({ onNav }) =>
 
   return (
     <>
+      <SEO title="Panel de Administración" description="Gestión interna de Zenith Grill." />
       <div className="flex bg-[#050505] min-h-screen text-white font-sans overflow-hidden">
       {/* PROFESSIONAL DASHBOARD SIDEBAR */}
       <aside className="w-64 bg-black border-r border-white/5 flex flex-col z-50 shrink-0">
@@ -369,14 +371,33 @@ export const Admin: React.FC<{ onNav: (page: string) => void }> = ({ onNav }) =>
                           <Clock size={12} /> Actualizado: {new Date().toLocaleTimeString()}
                         </p>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="glass-panel p-4 rounded-2xl border-white/5 min-w-[140px]">
-                           <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-1">Total Ventas</p>
-                           <p className="text-2xl font-black italic">${orders.reduce((sum, o) => sum + o.total, 0).toLocaleString()}</p>
+                           <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-1">Ventas Hoy</p>
+                           <p className="text-2xl font-black italic">${
+                             orders
+                               .filter(o => new Date(o.date).toDateString() === new Date().toDateString())
+                               .reduce((sum, o) => sum + o.total, 0)
+                               .toLocaleString()
+                           }</p>
                         </div>
                         <div className="glass-panel p-4 rounded-2xl border-white/5 min-w-[140px]">
-                           <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-1">Total Pedidos</p>
-                           <p className="text-2xl font-black italic">{orders.length.toString().padStart(2, '0')}</p>
+                           <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-1">Pedidos Hoy</p>
+                           <p className="text-2xl font-black italic">{
+                             orders
+                               .filter(o => new Date(o.date).toDateString() === new Date().toDateString())
+                               .length.toString().padStart(2, '0')
+                           }</p>
+                        </div>
+                        <div className="glass-panel p-4 rounded-2xl border-white/5 min-w-[140px]">
+                           <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-1">Promedio Pedido</p>
+                           <p className="text-2xl font-black italic">${
+                             (() => {
+                               const todayOrders = orders.filter(o => new Date(o.date).toDateString() === new Date().toDateString());
+                               const total = todayOrders.reduce((sum, o) => sum + o.total, 0);
+                               return todayOrders.length > 0 ? (total / todayOrders.length).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
+                             })()
+                           }</p>
                         </div>
                       </div>
                     </div>
@@ -737,7 +758,7 @@ export const Admin: React.FC<{ onNav: (page: string) => void }> = ({ onNav }) =>
                             <div key={i} className="relative aspect-square group overflow-hidden rounded-2xl">
                               <img src={img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Gallery" />
                               <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col p-2 gap-1 justify-center">
-                                <button onClick={() => setConfig({ ...config, heroImage: img })} className="w-full py-1.5 bg-white text-black text-[7px] font-black uppercase rounded-lg">Fondo</button>
+                                <button onClick={() => setConfig({ ...config, heroImage: img, currentBackground: img })} className="w-full py-1.5 bg-white text-black text-[7px] font-black uppercase rounded-lg">Fondo</button>
                                 <button onClick={() => removeGalleryImage(i)} className="w-full py-1.5 bg-red-600 text-white text-[7px] font-black uppercase rounded-lg">Borrar</button>
                               </div>
                             </div>
