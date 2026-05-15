@@ -11,53 +11,69 @@ export const Home: React.FC<HomeProps> = ({ onNav }) => {
   const { config, reviews } = useApp();
 
   return (
-    <div className="pt-24 min-h-screen">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[90vh] flex items-center px-4 md:px-20 overflow-hidden">
+      <section className="relative h-screen flex items-center px-4 md:px-20 overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img 
+          <motion.img 
+            initial={{ scale: 1.2, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.4 }}
+            transition={{ duration: 2, ease: "easeOut" }}
             src={config.heroImage} 
             alt="Grill background"
-            className="w-full h-full object-cover opacity-30 scale-105"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent" />
         </div>
 
         <div className="relative z-10 max-w-5xl">
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
           >
-            <div className="flex items-center gap-3 text-[#ff4e00] bg-[#ff4e00]/10 w-fit px-5 py-2 rounded-full border border-[#ff4e00]/20 mb-10 font-mono text-[10px] uppercase tracking-[0.4em] backdrop-blur-md">
-              <Flame size={16} className="animate-pulse" /> {config.heroTagline}
+            <div className="flex items-center gap-3 text-primary bg-primary/10 w-fit px-5 py-2 rounded-full border border-primary/20 mb-8 font-mono text-[9px] uppercase tracking-[0.5em] backdrop-blur-md">
+              <Flame size={14} className="animate-pulse" /> {config.heroTagline}
             </div>
-            <h1 className="text-7xl md:text-[11rem] font-black font-serif leading-[0.75] tracking-tighter mb-10 uppercase italic">
-              {config.name} <br />
+            <h1 className="text-6xl md:text-[10rem] font-black font-serif leading-[0.8] tracking-tighter mb-8 uppercase italic">
+              {config.name.split(' ')[0]} <br />
               <span className="accent-text opacity-90">{config.heroSubTitle}</span>
             </h1>
-            <p className="text-xl md:text-2xl text-white/40 mb-12 leading-relaxed font-light font-sans max-w-2xl border-l border-[#ff4e00]/30 pl-8">
-              {config.description}
-            </p>
+            <div className="flex items-center gap-6 mb-12">
+               <div className="h-px w-20 bg-primary/50" />
+               <p className="text-lg md:text-xl text-white/50 font-light font-sans max-w-xl leading-relaxed italic">
+                 {config.description}
+               </p>
+            </div>
             <div className="flex flex-col sm:flex-row gap-6">
               <button
                 onClick={() => onNav('menu')}
-                className="group relative px-12 py-6 bg-[#ff4e00] text-black rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 overflow-hidden shadow-[0_20px_50px_rgba(255,78,0,0.4)] hover:shadow-[0_25px_60px_rgba(255,78,0,0.6)] hover:-translate-y-1 active:scale-95 transition-all duration-500"
+                className="group relative px-12 py-6 bg-primary text-black rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 overflow-hidden shadow-[0_20px_50px_rgba(255,78,0,0.3)] hover:shadow-[0_25px_60px_rgba(255,78,0,0.5)] hover:-translate-y-1 transition-all duration-500"
               >
-                <span className="relative z-10">Explorar la Carta</span>
+                <span className="relative z-10">Explorar Menú</span>
                 <ChevronRight size={22} className="relative z-10 group-hover:translate-x-2 transition-transform duration-500" />
               </button>
               <button
                 onClick={() => onNav('location')}
-                className="px-12 py-6 glass hover:bg-white/10 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center transition-all border border-white/10 hover:border-white/30 backdrop-blur-2xl"
+                className="px-12 py-6 glass hover:bg-white/10 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center transition-all border border-white/5 hover:border-white/20 backdrop-blur-3xl"
               >
-                Visítanos
+                Ubicación
               </button>
             </div>
           </motion.div>
         </div>
 
+        {/* Scroll Indicator */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-white/20"
+        >
+          <span className="text-[8px] uppercase tracking-[0.5em] font-bold">Scroll</span>
+          <div className="w-px h-12 bg-gradient-to-b from-primary to-transparent" />
+        </motion.div>
         {/* Floating background text */}
         <div className="absolute right-[-5%] bottom-[10%] select-none pointer-events-none opacity-[0.02]">
            <h2 className="text-[30vw] font-black italic uppercase leading-none font-serif">Parrilla</h2>

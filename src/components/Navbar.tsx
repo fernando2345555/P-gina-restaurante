@@ -20,73 +20,52 @@ export const Navbar: React.FC<NavbarProps> = ({ onNav, currentPage, onLoginClick
   ];
 
   return (
-    <header className="fixed top-0 left-0 w-full h-20 z-[80] flex items-center justify-between px-8 glass-panel border-b border-white/10 no-print">
-      <div className="flex items-center gap-4 cursor-pointer" onClick={() => onNav('home')}>
-        <div className="w-10 h-10 bg-[#ff4e00] rounded-lg flex items-center justify-center font-bold text-black text-xl shadow-[0_0_15px_rgba(255,78,0,0.4)] overflow-hidden">
+    <header className="fixed top-0 left-0 w-full h-24 z-[80] flex items-center justify-between px-8 md:px-16 no-print transition-all duration-500">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-xl border-b border-white/5" />
+      
+      <div className="relative flex items-center gap-4 cursor-pointer group" onClick={() => onNav('home')}>
+        <div className="w-12 h-12 bg-[#ff4e00] rounded-2xl flex items-center justify-center font-black text-black text-2xl shadow-[0_10px_30px_rgba(255,78,0,0.3)] group-hover:scale-110 transition-transform duration-500 overflow-hidden">
           {config.logoImage ? (
             <img src={config.logoImage} alt="Logo" className="w-full h-full object-cover" />
           ) : (
             (config.name || 'Z').charAt(0).toUpperCase()
           )}
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tighter uppercase hidden sm:block">
-          {config.name.split(' ')[0]} <span className="accent-text">{config.name.split(' ').slice(1).join(' ')}</span>
-        </h1>
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">
+            {config.name.split(' ')[0]}
+          </h1>
+          <span className="text-[8px] uppercase tracking-[0.4em] font-bold text-white/30 group-hover:text-[#ff4e00] transition-colors">Templo de la Brasa</span>
+        </div>
       </div>
 
-      <nav className="flex gap-2 sm:gap-6 text-sm font-medium uppercase tracking-widest text-white/50">
+      <nav className="relative flex gap-10 text-[10px] font-black uppercase tracking-[0.3em] text-white/30 py-2">
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onNav(item.id)}
-            className={`transition-all relative pb-1 ${
+            className={`transition-all relative py-1 ${
               currentPage === item.id 
-                ? 'text-[#ff4e00] border-b-2 border-[#ff4e00]' 
-                : 'hover:text-white'
+                ? 'text-white' 
+                : 'hover:text-white/60'
             }`}
           >
             <span className="hidden md:inline">{item.label}</span>
             <item.icon size={18} className="md:hidden" />
+            {currentPage === item.id && (
+              <motion.div layoutId="navline" className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#ff4e00]" />
+            )}
           </button>
         ))}
       </nav>
 
-      <div className="flex items-center gap-4">
-        {isAdmin && (
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => onNav('admin')}
-              className={`p-2 rounded-xl transition-all relative ${
-                currentPage === 'admin' 
-                  ? 'bg-primary/20 text-primary border border-primary/30' 
-                  : 'hover:bg-white/5 text-white/50 border border-transparent'
-              }`}
-            >
-              <LayoutDashboard size={20} />
-              {newOrdersCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce shadow-lg border-2 border-black">
-                  {newOrdersCount}
-                </span>
-              )}
-            </button>
-            <div className="text-right hidden sm:block">
-              <p className="text-[8px] text-white/30 uppercase tracking-[0.2em] font-bold">Admin Session</p>
-              <p className="text-xs font-semibold text-white/80">Fernando Manager</p>
-            </div>
-            <button
-              onClick={() => onNav('home')}
-              className={`w-10 h-10 rounded-full border-2 p-0.5 transition-all overflow-hidden border-white/10`}
-            >
-              <div className="w-full h-full bg-[#333] rounded-full flex items-center justify-center text-[10px] font-bold tracking-tighter">F31</div>
-            </button>
-            <button
-              onClick={logout}
-              className="p-2 rounded-full hover:bg-red-500/20 text-red-500/60 hover:text-red-500 transition-all"
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
-        )}
+      <div className="relative hidden md:flex items-center gap-6">
+        <button 
+          onClick={() => window.open(`https://wa.me/${config.whatsappNumber}`, '_blank')}
+          className="text-[10px] font-black uppercase tracking-widest px-6 py-3 border border-white/10 rounded-full hover:bg-white hover:text-black transition-all"
+        >
+          Reserva YA
+        </button>
       </div>
     </header>
   );

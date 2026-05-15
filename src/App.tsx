@@ -8,31 +8,33 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { LoginModal } from './components/LoginModal';
 import { WhatsAppButton } from './components/WhatsAppButton';
-import { LoginBar } from './components/LoginBar';
 import { Home } from './pages/Home';
 import { Menu } from './pages/Menu';
 import { Reviews } from './pages/Reviews';
 import { Location } from './pages/Location';
 import { Admin } from './pages/Admin';
 import { AnimatePresence, motion } from 'motion/react';
+import { Flame } from 'lucide-react';
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState('home');
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const { isAdmin, config } = useApp();
+  const { isAdmin, config, isLoaded } = useApp();
   const [bgIndex, setBgIndex] = useState(0);
 
   const bgImages = [
     config.heroImage,
     ...(Array.isArray(config.galleryImages) ? config.galleryImages : [])
-  ];
+  ].filter(Boolean);
 
-  // Rotate background on navigation
+  const currentBg = config.currentBackground || bgImages[bgIndex];
+
+  // Rotate background on navigation if no explicit background is set
   useEffect(() => {
-    if (bgImages.length > 0) {
+    if (!config.currentBackground && bgImages.length > 0) {
       setBgIndex((prev) => (prev + 1) % bgImages.length);
     }
-  }, [currentPage, config.galleryImages]);
+  }, [currentPage, config.galleryImages, config.currentBackground, bgImages.length]);
 
   // Protect admin route
   useEffect(() => {
@@ -52,87 +54,111 @@ function AppContent() {
     }
   };
 
+  useEffect(() => {
+    const titles: Record<string, string> = {
+      home: 'Inicio',
+      menu: 'Nuestra Carta',
+      reviews: 'Experiencias',
+      location: 'Ubicación',
+      admin: 'Technical Access'
+    };
+    document.title = `${titles[currentPage] || 'Zenith Grill'} | Zenith Grill - Templo de la Brasa`;
+  }, [currentPage]);
+
   return (
     <div className={`relative min-h-screen ${config.fontFamily ? `font-app-${config.fontFamily}` : 'font-sans'} bg-[#0a0a0a] overflow-x-hidden transition-all duration-700`}>
-      {/* Animated Food Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={bgImages[bgIndex]}
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 0.15, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="absolute inset-0"
-          >
-            <img 
-              src={bgImages[bgIndex]} 
-              alt="Grill Mood"
-              className="w-full h-full object-cover"
-            />
-          </motion.div>
-        </AnimatePresence>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a] opacity-80" />
-        <div className="fire-orb top-[-100px] left-[-100px]" />
-        <div className="fire-orb bottom-[-100px] right-[-100px]" />
-      </div>
-
-      <div className="relative z-10 flex flex-col min-h-screen">
-        {currentPage !== 'admin' && (
-          <Navbar 
-            currentPage={currentPage} 
-            onNav={setCurrentPage} 
-            onLoginClick={() => setIsLoginOpen(true)} 
-          />
-        )}
-        
-        <main className={`flex-1 ${currentPage === 'admin' ? 'w-full h-screen' : ''}`}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="relative min-h-screen flex flex-col"
+      >
+        {/* Animated Food Background */}
+        <div className="fixed inset-0 z-0 pointer-events-none">
           <AnimatePresence mode="wait">
             <motion.div
-              key={currentPage}
-              initial={{ opacity: 0, y: currentPage === 'admin' ? 0 : 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: currentPage === 'admin' ? 0 : -20 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className={currentPage === 'admin' ? 'h-full' : ''}
+              key={currentBg}
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 0.15, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="absolute inset-0"
             >
-              {renderPage()}
+              <img 
+                src={currentBg} 
+                alt="Grill Mood"
+                className="w-full h-full object-cover"
+              />
             </motion.div>
           </AnimatePresence>
-        </main>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a] opacity-80" />
+          <div className="fire-orb top-[-100px] left-[-100px]" />
+          <div className="fire-orb bottom-[-100px] right-[-100px]" />
+        </div>
 
-        {currentPage !== 'admin' && (
-          <footer className="w-full px-8 py-4 flex flex-col sm:flex-row items-center justify-between text-[10px] uppercase tracking-widest text-gray-500 bg-black/50 z-10 border-t border-white/5 no-print mt-auto gap-4">
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <p>{config.siteName} Management Pro v2.4.0</p>
-              <div className="hidden sm:flex items-center gap-2">
-                <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="text-[8px] opacity-40">Servidor Activo</span>
-              </div>
-            </div>
-            
-            <p>© {new Date().getFullYear()} - {config.name} | {config.adminEmail}</p>
-            
-            <div className="flex items-center gap-6">
-              <button 
-                onClick={() => isAdmin ? setCurrentPage('admin') : setIsLoginOpen(true)}
-                className="opacity-20 hover:opacity-100 transition-opacity flex items-center gap-2 group"
+        <div className="relative z-10 flex flex-col min-h-screen">
+          {currentPage !== 'admin' && (
+            <Navbar 
+              currentPage={currentPage} 
+              onNav={setCurrentPage} 
+              onLoginClick={() => setIsLoginOpen(true)} 
+            />
+          )}
+          
+          <main className={`flex-1 ${currentPage === 'admin' ? 'w-full h-screen' : ''}`}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentPage}
+                initial={{ opacity: 0, y: currentPage === 'admin' ? 0 : 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: currentPage === 'admin' ? 0 : -20 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className={currentPage === 'admin' ? 'h-full' : ''}
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-white/20 group-hover:bg-[#ff4e00]" />
-                Soporte Técnico
-              </button>
-              <div className="hidden sm:flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span>Sistema Protegido</span>
-              </div>
-            </div>
-          </footer>
-        )}
-      </div>
+                {renderPage()}
+              </motion.div>
+            </AnimatePresence>
+          </main>
 
-      {currentPage !== 'admin' && <WhatsAppButton />}
-      {currentPage !== 'admin' && <LoginBar />}
-      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+          {currentPage !== 'admin' && (
+            <footer className="py-20 px-4 md:px-20 bg-black/80 backdrop-blur-3xl border-t border-white/5 relative z-10 no-print mt-auto">
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+                <div className="flex flex-col items-center md:items-start gap-4">
+                  <h2 className="text-2xl font-black italic uppercase tracking-tighter font-serif">
+                    Zenith Grill
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
+                    <p className="text-white/20 text-[10px] uppercase tracking-[0.4em] font-bold">
+                      © {new Date().getFullYear()} Templo de la Brasa | All Rights Reserved
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-8">
+                  <button onClick={() => setCurrentPage('home')} className="text-[10px] uppercase font-bold tracking-widest text-white/40 hover:text-white transition-colors">Inicio</button>
+                  <button onClick={() => setCurrentPage('menu')} className="text-[10px] uppercase font-bold tracking-widest text-white/40 hover:text-white transition-colors">Menú</button>
+                  <button onClick={() => setCurrentPage('reviews')} className="text-[10px] uppercase font-bold tracking-widest text-white/40 hover:text-white transition-colors">Reseñas</button>
+                  <button onClick={() => setCurrentPage('location')} className="text-[10px] uppercase font-bold tracking-widest text-white/40 hover:text-white transition-colors">Ubicación</button>
+                </div>
+
+                <div className="flex items-center gap-4">
+                   {/* Hidden Admin Access Trigger - Clickable subtle text */}
+                   <button 
+                     onClick={() => isAdmin ? setCurrentPage('admin') : setIsLoginOpen(true)}
+                     className="text-[8px] text-white/10 uppercase tracking-[0.5em] font-black italic hover:text-white/20 transition-all cursor-default"
+                   >
+                     Handcrafted with Fire
+                   </button>
+                </div>
+              </div>
+            </footer>
+          )}
+        </div>
+
+        {currentPage !== 'admin' && <WhatsAppButton />}
+        <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+      </motion.div>
     </div>
   );
 }

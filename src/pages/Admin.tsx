@@ -611,22 +611,26 @@ export const Admin: React.FC<{ onNav: (page: string) => void }> = ({ onNav }) =>
                         </div>
 
                         <div className="space-y-2">
-                          <p className="text-[10px] uppercase text-white/30 font-bold tracking-widest pl-1">Color de Fondo de Tarjetas</p>
-                          <div className="flex gap-4 items-center glass-panel p-3 rounded-2xl border-white/5">
-                            <input 
-                              name="cardColor" 
-                              type="color"
-                              value={config.cardColor.startsWith('#') ? config.cardColor : '#1a1a1a'} 
-                              onChange={handleConfigChange} 
-                              className="w-10 h-10 bg-transparent border-none cursor-pointer rounded-xl overflow-hidden" 
-                            />
-                            <input 
-                              name="cardColor" 
-                              type="text"
-                              value={config.cardColor} 
-                              onChange={handleConfigChange} 
-                              className="bg-transparent text-[10px] font-black uppercase focus:outline-none w-full" 
-                            />
+                          <p className="text-[10px] uppercase text-white/30 font-bold tracking-widest pl-1">Fondo Global (para todos)</p>
+                          <div className="flex gap-2">
+                             <select 
+                               name="currentBackground"
+                               value={config.currentBackground || ''}
+                               onChange={handleConfigChange}
+                               className="flex-1 bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-[10px] font-black uppercase focus:outline-none focus:border-primary transition-all text-[#ff4e00]"
+                             >
+                               <option value="" className="bg-zinc-900">Rotación Automática</option>
+                               <option value={config.heroImage} className="bg-zinc-900">Hero Image (Default)</option>
+                               {config.galleryImages.map((img, idx) => (
+                                 <option key={idx} value={img} className="bg-zinc-900">Galería #{idx + 1}</option>
+                               ))}
+                             </select>
+                             <button 
+                               onClick={() => setConfig({ ...config, currentBackground: '' })}
+                               className="px-4 bg-white/5 text-white/30 text-[8px] font-black uppercase rounded-2xl hover:text-white border border-white/5 transition-colors"
+                             >
+                               Reset
+                             </button>
                           </div>
                         </div>
                       </div>
@@ -1258,25 +1262,6 @@ export const Admin: React.FC<{ onNav: (page: string) => void }> = ({ onNav }) =>
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="pt-12 border-t border-white/5 flex flex-col items-center gap-6">
-                     <button 
-                       onClick={() => {
-                         setNotification({
-                           title: 'Sincronización Exitosa',
-                           message: 'La configuración ha sido persistida en el almacenamiento local con éxito.',
-                           type: 'success'
-                         });
-                         setTimeout(() => setNotification(null), 4000);
-                       }}
-                       className="px-12 py-5 bg-white text-black font-black uppercase tracking-[0.3em] text-xs rounded-2xl shadow-[0_20px_50px_rgba(255,255,255,0.1)] hover:scale-105 active:scale-95 transition-all"
-                     >
-                       Guardar Toda la Configuración
-                     </button>
-                     <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-green-500/50">
-                       <Check size={12} /> Sincronizado en tiempo real con la Nube (Firestore)
-                     </div>
                   </div>
                 </div>
               </div>

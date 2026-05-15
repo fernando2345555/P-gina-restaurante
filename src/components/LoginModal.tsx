@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { LogIn, User, Lock, X } from 'lucide-react';
+import { LogIn, User, Lock, X, Globe } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -9,19 +9,24 @@ interface LoginModalProps {
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
-  const { login } = useApp();
-  const [user, setUser] = useState('');
+  const { login, signInWithGoogle, user } = useApp();
+  const [userInput, setUserInput] = useState('');
   const [pass, setPass] = useState('');
   const [error, setError] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(user, pass)) {
+    if (login(userInput, pass)) {
       onClose();
     } else {
       setError(true);
       setTimeout(() => setError(false), 2000);
     }
+  };
+
+  const handleGoogleLogin = async () => {
+    await signInWithGoogle();
+    onClose();
   };
 
   return (
@@ -62,8 +67,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
                   <input
                     type="text"
-                    value={user}
-                    onChange={(e) => setUser(e.target.value)}
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-10 py-3 focus:outline-none focus:border-[#ff4d00]/50 transition-colors"
                     placeholder="Ingrese su usuario"
                     required
@@ -101,6 +106,24 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                 className="w-full bg-[#ff4d00] hover:bg-[#ff6a00] text-white font-bold py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(255,77,0,0.3)] active:scale-[0.98]"
               >
                 Entrar al Sistema
+              </button>
+
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-zinc-900 px-2 text-white/40">O continuar con</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3 rounded-xl transition-all border border-white/10 flex items-center justify-center gap-2"
+              >
+                <Globe size={18} className="text-[#ff4d00]" />
+                Google Workspace
               </button>
             </form>
           </motion.div>

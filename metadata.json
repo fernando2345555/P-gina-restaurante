@@ -1,6 +1,11 @@
 {
-  "name": "Remix: Zenith Grill \u0026 Management Pro",
-  "description": "Premium grill restaurant management system and interactive customer platform with Glassmorphism design.",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
+  "name": "Zenith Grill",
+  "description": "Zenith Grill | Templo de la Brasa - Una experiencia gastronómica premium donde el fuego y la tradición se encuentran.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

@@ -113,7 +113,7 @@ ${orderItemsText}
         {/* Menu Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 relative z-10">
         <AnimatePresence mode="popLayout">
-          {filteredMenu.map((item) => (
+          {filteredMenu.length > 0 ? filteredMenu.map((item) => (
             <motion.div
               layout
               key={item.id}
@@ -127,6 +127,11 @@ ${orderItemsText}
                 <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md px-3 py-1 rounded-full text-primary font-bold border border-white/10 text-xs">
                   ${item.price.toFixed(2)}
                 </div>
+                {item.category === 'Cortes' && (
+                  <div className="absolute bottom-4 left-4 flex gap-2">
+                    <span className="px-2 py-0.5 bg-primary/20 text-primary border border-primary/30 text-[8px] uppercase font-black rounded backdrop-blur-md">Madurado</span>
+                  </div>
+                )}
               </div>
               <div className="p-6 flex-1 flex flex-col">
                 <h3 className="text-xl font-black italic uppercase mb-2 group-hover:text-primary transition-colors">{item.name}</h3>
@@ -148,7 +153,11 @@ ${orderItemsText}
                 </div>
               </div>
             </motion.div>
-          ))}
+          )) : (
+            <div className="col-span-full py-20 text-center glass-panel rounded-3xl border border-dashed border-white/5">
+              <p className="text-white/20 uppercase tracking-[0.3em] font-bold text-[10px]">Aún no hay platos en esta categoría</p>
+            </div>
+          )}
         </AnimatePresence>
       </div>
 

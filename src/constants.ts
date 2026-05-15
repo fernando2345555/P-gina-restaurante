@@ -10,6 +10,7 @@ export const INITIAL_CONFIG: RestaurantConfig = {
   primaryColor: "#ff4e00",
   adminEmail: "fernando31226477@gmail.com",
   adminPassword: "3126",
+  currentBackground: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1600&auto=format&fit=crop",
   siteName: "Zenith Grill | Templo de la Brasa",
   galleryImages: [
     "https://images.unsplash.com/photo-1544025162-d76694265947?w=1600&auto=format&fit=crop",

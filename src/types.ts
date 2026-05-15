@@ -51,6 +51,7 @@ export interface RestaurantConfig {
   primaryColor: string;
   adminEmail: string;
   adminPassword?: string;
+  currentBackground?: string;
   siteName: string;
   galleryImages: string[];
   fontFamily: 'sans' | 'serif' | 'mono' | 'display';

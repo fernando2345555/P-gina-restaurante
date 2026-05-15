@@ -1,0 +1,140 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ---------------------------------------------------------
+    // 0. Global Safety Net
+    // ---------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ---------------------------------------------------------
+    // 1. Primitive Helpers
+    // ---------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isEmailVerified() && (
+        request.auth.token.email == 'farmamorta6666@gmail.com' ||
+        (exists(/databases/$(database)/documents/settings/config) && 
+         get(/databases/$(database)/documents/settings/config).data.adminEmail == request.auth.token.email)
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // ---------------------------------------------------------
+    // 2. Validation Blueprints
+    // ---------------------------------------------------------
+
+    function isValidConfig(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.adminEmail is string && data.adminEmail.size() <= 100 &&
+             (!data.keys().hasAny(['adminPassword']) || data.adminPassword is string);
+    }
+
+    function isValidMenuItem(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.price is number && data.price >= 0 &&
+             data.category is string && data.category.size() <= 50;
+    }
+
+    function isValidReview(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.comment is string && data.comment.size() <= 1000 &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+             data.approved is bool;
+    }
+
+    function isValidOrder(data) {
+      return data.customerName is string && data.customerName.size() <= 100 &&
+             data.total is number && data.total >= 0 &&
+             data.status in ['pending', 'delivered'];
+    }
+
+    function isValidMessage(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.email is string && data.email.size() <= 100 &&
+             data.message is string && data.message.size() <= 2000 &&
+             data.read is bool;
+    }
+
+    // ---------------------------------------------------------
+    // 3. Collection Rules
+    // ---------------------------------------------------------
+
+    // Global Config
+    match /settings/config {
+      allow read: if true;
+      allow write: if isAdmin() && isValidConfig(incoming());
+    }
+
+    // Menu
+    match /menu/{itemId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidMenuItem(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      // List: If not admin, MUST filter by approved == true in client
+      allow list: if isAdmin() || (resource.data.approved == true);
+      allow get: if isAdmin() || (resource.data.approved == true);
+      
+      allow create: if isValidReview(incoming()) && 
+                    incoming().approved == false;
+      
+      allow update: if isAdmin() && isValidReview(incoming());
+      
+      allow delete: if isAdmin();
+    }
+
+    // Orders
+    match /orders/{orderId} {
+      allow list, get: if isAdmin();
+      
+      allow create: if isValidOrder(incoming()) &&
+                    incoming().status == 'pending'; // New orders must be pending
+      
+      allow update: if (
+        isAdmin() && 
+        isValidOrder(incoming()) && 
+        incoming().diff(existing()).affectedKeys().hasOnly(['status'])
+      );
+      
+      allow delete: if isAdmin();
+    }
+
+    // Messages
+    match /messages/{messageId} {
+      allow list, get: if isAdmin();
+      
+      allow create: if isValidMessage(incoming()) &&
+                    incoming().read == false;
+      
+      allow update: if isAdmin() && 
+                    isValidMessage(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+      
+      allow delete: if isAdmin();
+    }
+  }
+}
